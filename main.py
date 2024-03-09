@@ -1,6 +1,7 @@
 import os
 import sys
 import psycopg2
+import get_API
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -19,12 +20,21 @@ def main():
         cursor = conn.cursor()
         if (len(sys.argv) == 3 and sys.argv[1] == "get_medical_records"):
             patient_num = sys.argv[2]
-            records = get_medical_records(patient_num, cursor)
+            records = get_API.get_medical_records(patient_num, cursor)
             for record in records:
                 print(record);
             
             if len(records) == 0:
                 print("Patient has no medical record")
+
+        elif (len(sys.argv) == 3 and sys.argv[1] == "view_current_prescriptions"):
+            patient_num = sys.argv[2]
+            prescriptions = get_API.view_current_prescriptions(patient_num, cursor)
+            for prescription in prescriptions:
+                print(prescription);
+            
+            if len(prescriptions) == 0:
+                print("Patient has no current prescriptions")
         else:
             print("invalid function or parameters")
         
@@ -34,24 +44,6 @@ def main():
 
     except psycopg2.Error as e:
         print(f"Database connection failed: {e}")
-
-
-def get_medical_records(patient_num, cursor):
-    try:
-        query = """
-        SELECT mr.*
-        FROM medicalrecord mr 
-        JOIN appointment a ON mr.appointmentid  = a.id
-        JOIN patient p ON p.id = a.patientid
-        WHERE p.patientnum = %s
-        ORDER BY mr.date DESC;
-        """
-        cursor.execute(query, (patient_num,))
-        records = cursor.fetchall()
-        return records
-    except Exception as e:
-        print(f"Error retrieving medical records: {e}")
-        return []
     
 if __name__ == "__main__":
     main()

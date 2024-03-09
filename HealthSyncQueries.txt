@@ -5,5 +5,13 @@ FROM medicalrecord mr
     JOIN patient p ON p.id = a.patientid
 ORDER BY mr.date DESC;
 
-//
+// Get Prescription given patientNum
+SELECT pr.*
+FROM Prescription pr
+    JOIN medicalrecord mr ON mr.id = pr.medicalrecordid
+    JOIN appointment a ON a.id = mr.appointmentid 
+    JOIN patient p ON p.id = a.patientid
+WHERE p.patientNum = %s AND pr.enddate > CURRENT_DATE
+ORDER BY pr.enddate DESC;
+
 /Library/Frameworks/Python.framework/Versions/3.7/bin/python3 API.py get_medical_records P10004
