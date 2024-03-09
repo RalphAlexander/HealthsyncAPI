@@ -4,10 +4,10 @@ CREATE DATABASE healthsync;
 \c healthsync;
 
 CREATE TABLE Title (
-	ID			VARCHAR(2) not null,
-	Name			VARCHAR(25),
+	Abbreviation		VARCHAR(10) not null,
+	Name			VARCHAR(25) not null unique,
 
-	PRIMARY KEY		(ID)
+	PRIMARY KEY		(Abbreviation)
 );
 
 CREATE TABLE CheckInOffice (
@@ -19,11 +19,11 @@ CREATE TABLE CheckInOffice (
 );
 
 CREATE TABLE Department (
-	ID			VARCHAR(2) not null,
+	Abbreviation		VARCHAR(10) not null,
 	Name			VARCHAR(40) not null unique,
 	CheckInOfficeID		INTEGER not null,
 
-	PRIMARY KEY		(ID),
+	PRIMARY KEY		(Abbreviation),
 	FOREIGN KEY		(CheckInOfficeID) references CheckInOffice(ID)
 				Deferrable Initially Deferred
 );
@@ -33,35 +33,32 @@ CREATE TABLE HealthCareProvider (
 	EmployeeNum		VARCHAR(10) not null unique,
 	FirstName		VARCHAR(40) not null,
 	LastName		VARCHAR(40) not null,
-	TitleID			VARCHAR(2) not null,
-	DepartmentID		VARCHAR(2) not null,
+	TitleAbbreviation	VARCHAR(10) not null,
+	DepartmentAbbreviation	VARCHAR(10) not null,
 	CurrentlyEmployed	BOOLEAN not null,
-	SupervisorID		INTEGER,
 
 	PRIMARY KEY		(ID),
-	FOREIGN KEY		(TitleID) references Title(ID)
+	FOREIGN KEY		(TitleAbbreviation) references Title(Abbreviation)
 					Deferrable Initially Deferred,
-	FOREIGN KEY		(DepartmentID) references Department(ID)
-					Deferrable Initially Deferred,
-	FOREIGN KEY		(SupervisorID) references HealthCareProvider(ID)
+	FOREIGN KEY		(DepartmentAbbreviation) references Department(Abbreviation)
 					Deferrable Initially Deferred
 );
 
 CREATE TABLE Specialty (
-	ID			VARCHAR(2) not null,
-	SpecialtyName		VARCHAR(20) not null,
+	Abbreviation		VARCHAR(10) not null,
+	SpecialtyName		VARCHAR(20) not null unique,
 
-	PRIMARY KEY		(ID)
+	PRIMARY KEY		(Abbreviation)
 );
 
 CREATE TABLE ProviderSpecialties (
 	ProviderID		SERIAL not null,
-	SpecialtyID		VARCHAR(2) not null,
+	SpecialtyAbbreviation	VARCHAR(10) not null,
 
-	PRIMARY KEY		(ProviderID, SpecialtyID),
+	PRIMARY KEY		(ProviderID, SpecialtyAbbreviation),
 	FOREIGN KEY		(ProviderID) references HealthCareProvider(ID)
 					Deferrable Initially Deferred,
-	FOREIGN KEY		(SpecialtyID) references Specialty(ID)
+	FOREIGN KEY		(SpecialtyAbbreviation) references Specialty(Abbreviation)
 					Deferrable Initially Deferred
 );
 
@@ -187,18 +184,16 @@ CREATE TABLE Prescription (
 					Deferrable Initially Deferred
 );
 
-INSERT INTO Title (ID, Name) VALUES
+INSERT INTO Title (Abbreviation, Name) VALUES
 	('DR', 'Doctor'),
-	('NR', 'Nurse'),
 	('RN', 'Registered Nurse'),
-	('LN', 'Licensed Practical Nurse'),
+	('LPN', 'Licensed Practical Nurse'),
 	('NP', 'Nurse Practitioner'),
 	('MA', 'Medical Assistant'),
-	('PT', 'Physical Therapist'),
-	('DT', 'Dentist'),
-	('NT', 'Nutritionist'),
-	('OS', 'Orthopedic Surgeon'),
-	('AL', 'Allergist');
+	('TP', 'Therapist'),
+	('DDS', 'Doctor of Dental Surgery'),
+	('ND', 'Nutritionist/Dietitian'),
+	('PA', 'Physician Assistant');
 
 
 INSERT INTO CheckInOffice (Building, RoomNumber) VALUES
@@ -272,9 +267,14 @@ INSERT INTO Sex (SexID, Sex) VALUES
 	('F', 'Female');
 
 
-INSERT INTO Specialty (ID, SpecialtyName) VALUES
-	('01', 'Cardiology'),
-	('02', 'Neurology');
+INSERT INTO Specialty (Abbreviation, SpecialtyName) VALUES
+	('CARD', 'Cardiology'),
+	('NEUR', 'Neurology'),
+	('RAD', 'Radiology'),
+	('PHY', 'Physical'),
+	('RES', 'Respitory'),
+	('DERM', 'Dermatology'),
+	('ORTH', 'Orthopedics');
 
 
 INSERT INTO Address (Address1, Address2, PostalCode, City, StateAbbreviation) VALUES
@@ -296,33 +296,33 @@ INSERT INTO Medication (Abbreviation, Name) VALUES
 	('CCB', 'Amlodipine');
 
 
-INSERT INTO Department (ID, Name, CheckInOfficeID) VALUES
-	('AD', 'Administration', 1),
+INSERT INTO Department (Abbreviation, Name, CheckInOfficeID) VALUES
+	('ADM', 'Administration', 1),
 	('ER', 'Emergency Room', 3),
-	('GE', 'General Medicine', 1),
-	('SU', 'Surgery', 6),
-	('PE', 'Pediatrics', 7),
-	('CA', 'Cardiology', 9),
-	('RA', 'Radiology', 8),
-	('LA', 'Laboratory', 1),
+	('GEN', 'General Medicine', 1),
+	('SUR', 'Surgery', 6),
+	('PED', 'Pediatrics', 7),
+	('CARD', 'Cardiology', 9),
+	('RAD', 'Radiology', 8),
+	('LAB', 'Laboratory', 1),
 	('DN', 'Dental', 2),
 	('PH', 'Physical Therapy', 10),
 	('NU', 'Nutrition', 1),
 	('AL', 'Allergy', 7);
 
 
-INSERT INTO HealthCareProvider (EmployeeNum, FirstName, LastName, TitleID, DepartmentID, CurrentlyEmployed, SupervisorID) VALUES
-	('EMP001', 'John', 'Doe', 'NR', 'GE', TRUE, NULL),
-	('EMP002', 'Jane', 'Smith', 'LN', 'GE', TRUE, 2),
-	('EMP003', 'Michael', 'Johnson', 'DR', 'CA', TRUE, 3),
-	('EMP004', 'Samantha', 'Taylor', 'DR', 'DN', TRUE, NULL),
-	('EMP005', 'Lucas', 'Miller', 'PT', 'PH', TRUE, NULL),
-	('EMP006', 'Olivia', 'Brown', 'DR', 'GE', TRUE, 6),
-	('EMP007', 'Ethan', 'Davis', 'NT', 'NU', TRUE, NULL),
-	('EMP008', 'Amelia', 'Wilson', 'DR', 'GE', TRUE, 8),
-	('EMP009', 'Henry', 'Martinez', 'DR', 'AL', TRUE, NULL),
-	('EMP010', 'Ava', 'Taylor', 'DR', 'GE', TRUE, 10),
-	('EMP011', 'Elijah', 'Harris', 'NT', 'NU', TRUE, 11);
+INSERT INTO HealthCareProvider (EmployeeNum, FirstName, LastName, TitleAbbreviation, DepartmentAbbreviation, CurrentlyEmployed) VALUES
+	('EMP001', 'John', 'Doe', 'RN', 'GEN', TRUE),
+	('EMP002', 'Jane', 'Smith', 'LPN', 'GEN', TRUE),
+	('EMP003', 'Michael', 'Johnson', 'DR', 'CARD', TRUE),
+	('EMP004', 'Samantha', 'Taylor', 'DR', 'DN', TRUE),
+	('EMP005', 'Lucas', 'Miller', 'TP', 'PH', TRUE),
+	('EMP006', 'Olivia', 'Brown', 'DR', 'GEN', TRUE),
+	('EMP007', 'Ethan', 'Davis', 'ND', 'NU', TRUE),
+	('EMP008', 'Amelia', 'Wilson', 'DR', 'GEN', TRUE),
+	('EMP009', 'Henry', 'Martinez', 'DR', 'AL', TRUE),
+	('EMP010', 'Ava', 'Taylor', 'DR', 'GEN', TRUE),
+	('EMP011', 'Elijah', 'Harris', 'ND', 'NU', TRUE);
 
 
 INSERT INTO Patient (PatientNum, FirstName, LastName, email, phone,sexID, birthday) VALUES
