@@ -1,0 +1,9 @@
+// Get Medical Record 
+SELECT mr.*
+FROM medicalrecord mr 
+    JOIN appointment a ON mr.appointmentid  = a.id
+    JOIN patient p ON p.id = a.patientid
+ORDER BY mr.date DESC;
+
+//
+/Library/Frameworks/Python.framework/Versions/3.7/bin/python3 API.py get_medical_records P10004
