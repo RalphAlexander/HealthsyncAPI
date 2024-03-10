@@ -1,0 +1,26 @@
+--Fills healthcareprovider and providershifts tables
+INSERT INTO HealthCareProvider (EmployeeNum, FirstName, LastName, TitleAbbreviation, DepartmentAbbreviation, CurrentlyEmployed) VALUES
+	('EMP001', 'John', 'Doe', 'RN', 'GEN', TRUE),
+	('EMP002', 'Jane', 'Smith', 'LPN', 'GEN', TRUE),
+	('EMP003', 'Michael', 'Johnson', 'DR', 'CARD', TRUE),
+	('EMP004', 'Samantha', 'Taylor', 'DR', 'DN', TRUE),
+	('EMP005', 'Lucas', 'Miller', 'TP', 'PH', TRUE),
+	('EMP006', 'Olivia', 'Brown', 'DR', 'GEN', TRUE),
+	('EMP007', 'Ethan', 'Davis', 'ND', 'NU', TRUE),
+	('EMP008', 'Amelia', 'Wilson', 'DR', 'GEN', TRUE),
+	('EMP009', 'Henry', 'Martinez', 'DR', 'AL', TRUE),
+	('EMP010', 'Ava', 'Taylor', 'DR', 'GEN', TRUE),
+	('EMP011', 'Elijah', 'Harris', 'ND', 'NU', TRUE);
+
+INSERT INTO ProviderShifts (HealthCareProviderID, ShiftStart, ShiftEnd) VALUES
+	(1, '2024-03-15 08:00:00', '2024-03-15 17:00:00'),
+	(2, '2024-03-15 08:00:00', '2024-03-15 17:00:00'),
+	(3, '2024-03-16 08:00:00', '2024-03-16 17:00:00'),
+	(4, '2024-03-16 08:00:00', '2024-03-16 17:00:00'),
+	(5, '2024-03-17 08:00:00', '2024-03-17 17:00:00'),
+	(6, '2024-03-17 08:00:00', '2024-03-17 17:00:00'),
+	(7, '2024-03-18 08:00:00', '2024-03-18 17:00:00'), 
+	(8, '2024-03-18 08:00:00', '2024-03-18 17:00:00'),
+	(9, '2024-03-19 08:00:00', '2024-03-19 17:00:00'),
+	(10, '2024-03-18 08:00:00', '2024-03-18 17:00:00'),
+	(11, '2024-03-17 08:00:00', '2024-03-17 17:00:00');

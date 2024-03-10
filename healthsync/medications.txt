@@ -1,0 +1,9 @@
+--Fills medication domain table
+INSERT INTO Medication (Abbreviation, Name) VALUES
+	('ASA', 'Aspirin'),
+	('IBU', 'Ibuprofen'),
+	('INS', 'Insulin'),
+	('ACEI', 'Lisinopril'),
+	('ARB', 'Losartan'),
+	('BB', 'Metoprolol'),
+	('CCB', 'Amlodipine');

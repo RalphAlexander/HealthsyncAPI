@@ -1,0 +1,20 @@
+--Fills medicalRecord and prescription tables
+INSERT INTO MedicalRecord (AppointmentID, MedicalRecordNum, Date, Record) VALUES
+	(1, 10001, '2024-03-15 09:30:00', 'Patient reported mild headache. Advised rest and hydration.'),
+	(2, 10002, '2024-03-15 10:30:00', 'Completed dental cleaning. No cavities found.'),
+	(3, 10003, '2024-03-16 11:30:00', 'Physical therapy session for knee pain. Showed improvement.'),
+	(4, 10004, '2024-03-16 09:30:00', 'Administered routine vaccination.'),
+	(5, 10005, '2024-03-17 10:30:00', 'Nutrition consultation for diet planning.'),
+	(6, 10006, '2024-03-17 11:30:00', 'Annual physical exam completed. All results normal.'),
+	(7, 10007, '2024-03-18 09:30:00', 'Follow-up visit for headache. Symptoms reduced.'),
+	(8, 10008, '2024-03-18 10:30:00', 'Flu shot administered without complications.'),
+	(9, 10009, '2024-03-19 09:30:00', 'Consultation for skin allergy. Recommended allergy tests and provided initial treatment options.');
+
+INSERT INTO Prescription (MedicalRecordID, MedicationAbbreviation, Milligrams, Frequency, EndDate) VALUES
+	(1, 'IBU', 400, '8 hours', '2024-03-22'),
+	(1, 'ASA', 500, '12 hours', '2024-03-22'),
+	(3, 'IBU', 400, '8 hours', '2024-03-30'),
+	(6, 'ACEI', 20, '24 hours', '2024-09-17'),
+	(7, 'IBU', 600, '8 hours', '2024-03-25'),
+	(7, 'ASA', 500, '12 hours', '2024-03-25'),
+	(4, 'INS', 10, '24 hours', '2024-04-16');

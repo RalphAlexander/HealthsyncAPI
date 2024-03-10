@@ -1,0 +1,28 @@
+--Fills address, patient and patientAddresses tables
+INSERT INTO Address (Address1, Address2, PostalCode, City, StateAbbreviation) VALUES
+	('123 Main St', 'Apt 101', '12345', 'Seattle', 'WA'),
+	('456 Elm St', NULL, '54321', 'Los Angeles', 'CA'),
+	('789 Pine St', 'Suite 5', '67890', 'Chicago', 'IL'),
+	('101 Oak Rd', NULL, '98765', 'Houston', 'TX'),
+	('202 Maple Ave', 'Apt 202', '87654', 'Phoenix', 'AZ'),
+	('303 Birch Blvd', NULL, '76543', 'Philadelphia', 'PA');
+
+
+INSERT INTO Patient (PatientNum, FirstName, LastName, email, phone,sexID, birthday) VALUES
+	('P10001', 'Don', 'Joe', 'donjoe@email.com', '222-555-0101', 'M', '1980-05-01'),
+	('P10002', 'Jay', 'Joe', 'jayjoe@email.com', '222-555-0102', 'F', '1982-08-24'),
+	('P10003', 'Mike', 'Smith', 'mikesmith@email.com', '222-555-0103', 'M', '1975-11-15'),
+	('P10004', 'Emily', 'Jones', 'emilyjones@email.com', '222-555-0104', 'F', '1990-03-30'),
+	('P10005', 'David', 'Brown', 'davidbrown@email.com', '222-555-0105', 'M', '1988-07-22'),
+	('P10006', 'Sarah', 'Wilson', 'sarahwilson22@email.com', '222-555-2222', 'F', '1993-01-09'),
+	('P10007', 'Sarah', 'Wilson', 'sarahwilson@email.com', '222-555-0106', 'F', '1993-01-09');
+
+
+INSERT INTO PatientAddresses VALUES
+	(1, 1),
+	(2, 1),
+	(3, 2),
+	(4, 3),
+	(5, 4),
+	(6, 5),
+	(7, 6);

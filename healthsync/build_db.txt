@@ -1,0 +1,187 @@
+--Creates all tables for healthsync database
+
+\c postgres
+DROP DATABASE healthsync;
+CREATE DATABASE healthsync;
+\c healthsync;
+
+CREATE TABLE Title (
+	Abbreviation		VARCHAR(10) not null,
+	Name			VARCHAR(25) not null unique,
+
+	PRIMARY KEY		(Abbreviation)
+);
+
+CREATE TABLE CheckInOffice (
+	ID			SERIAL not null,
+	Building		VARCHAR(25) not null,
+	RoomNumber		VARCHAR(8) not null,
+
+	PRIMARY KEY		(ID)
+);
+
+CREATE TABLE Department (
+	Abbreviation		VARCHAR(10) not null,
+	Name			VARCHAR(40) not null unique,
+	CheckInOfficeID		INTEGER not null,
+
+	PRIMARY KEY		(Abbreviation),
+	FOREIGN KEY		(CheckInOfficeID) references CheckInOffice(ID)
+				Deferrable Initially Deferred
+);
+
+CREATE TABLE HealthCareProvider (
+	ID			SERIAL not null,
+	EmployeeNum		VARCHAR(10) not null unique,
+	FirstName		VARCHAR(40) not null,
+	LastName		VARCHAR(40) not null,
+	TitleAbbreviation	VARCHAR(10) not null,
+	DepartmentAbbreviation	VARCHAR(10) not null,
+	CurrentlyEmployed	BOOLEAN not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(TitleAbbreviation) references Title(Abbreviation)
+					Deferrable Initially Deferred,
+	FOREIGN KEY		(DepartmentAbbreviation) references Department(Abbreviation)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE Specialty (
+	Abbreviation		VARCHAR(10) not null,
+	SpecialtyName		VARCHAR(20) not null unique,
+
+	PRIMARY KEY		(Abbreviation)
+);
+
+CREATE TABLE ProviderSpecialties (
+	ProviderID		SERIAL not null,
+	SpecialtyAbbreviation	VARCHAR(10) not null,
+
+	PRIMARY KEY		(ProviderID, SpecialtyAbbreviation),
+	FOREIGN KEY		(ProviderID) references HealthCareProvider(ID)
+					Deferrable Initially Deferred,
+	FOREIGN KEY		(SpecialtyAbbreviation) references Specialty(Abbreviation)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE ProviderShifts (
+	ID			SERIAL not null,
+	HealthCareProviderID	INTEGER not null,
+	ShiftStart		TIMESTAMP not null,
+	ShiftEnd		TIMESTAMP not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(HealthCareProviderID) references HealthCareProvider(ID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE Sex (
+	SexID			VARCHAR(1) not null,
+	Sex			VARCHAR(10) not null,
+
+	PRIMARY KEY		(SexID)
+);
+
+CREATE TABLE Patient (
+	ID			SERIAL not null,
+	PatientNum		VARCHAR(10) not null unique,
+	FirstName		VARCHAR(40) not null,
+	LastName		VARCHAR(40) not null,
+	Email			VARCHAR(255),
+	Phone			VARCHAR(15),
+	SexID			VARCHAR(1),
+	Birthday		DATE,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(SexID) references Sex(SexID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE State (
+	Abbreviation		VARCHAR(2) not null,
+	Name			VARCHAR(15) not null,
+
+	PRIMARY KEY		(Abbreviation)
+);
+
+CREATE TABLE Address (
+	ID			SERIAL not null,
+	Address1		VARCHAR(30) not null,
+	Address2		VARCHAR(30),
+	PostalCode		VARCHAR(10),
+	City			VARCHAR(20) not null,
+	StateAbbreviation	VARCHAR(2) not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(StateAbbreviation) references State(Abbreviation)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE PatientAddresses (
+	PatientID		INTEGER not null,
+	AddressID		INTEGER not null,
+
+	PRIMARY KEY		(PatientID, AddressID),
+	FOREIGN KEY		(PatientID) references Patient(ID)
+					Deferrable Initially Deferred,
+	FOREIGN KEY		(AddressID) references Address(ID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE Appointment (
+	ID			SERIAL not null,
+	PatientID		INTEGER,
+	AppointmentNum		INTEGER not null unique,
+	Date			TIMESTAMP not null,
+	Duration		INTERVAL not null,
+	Purpose			VARCHAR(30) not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(PatientID) references Patient(ID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE AppointmentProviders (
+	HealthCareProviderID	INTEGER not null,
+	AppointmentID		INTEGER not null,
+
+	PRIMARY KEY		(HealthCareProviderID, AppointmentID),
+	FOREIGN KEY		(HealthCareProviderID) references HealthCareProvider(ID)
+					Deferrable Initially Deferred,
+	FOREIGN KEY		(AppointmentID) references Appointment(ID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE MedicalRecord (
+	ID			SERIAL not null,
+	AppointmentID		INTEGER not null,
+	MedicalRecordNum	INTEGER not null unique,
+	Date			TIMESTAMP not null,
+	Record			TEXT not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(AppointmentID) references Appointment(ID)
+					Deferrable Initially Deferred
+);
+
+CREATE TABLE Medication (
+	Abbreviation		VARCHAR(10) not null,
+	Name			VARCHAR(40) not null,
+
+	PRIMARY KEY		(Abbreviation)
+);
+
+CREATE TABLE Prescription (
+	ID			SERIAL not null,
+	MedicalRecordID		INTEGER not null,
+	MedicationAbbreviation	VARCHAR(10) not null,
+	Milligrams		INTEGER not null,
+	Frequency		INTERVAL not null,
+	EndDate			DATE not null,
+
+	PRIMARY KEY		(ID),
+	FOREIGN KEY		(MedicalRecordID) references MedicalRecord(ID)
+					Deferrable Initially Deferred,
+	FOREIGN KEY		(MedicationAbbreviation) references Medication(Abbreviation)
+					Deferrable Initially Deferred
+);

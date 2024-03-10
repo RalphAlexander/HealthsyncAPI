@@ -1,0 +1,4 @@
+--Fills sex domain table
+INSERT INTO Sex (SexID, Sex) VALUES
+	('M', 'Male'),
+	('F', 'Female');

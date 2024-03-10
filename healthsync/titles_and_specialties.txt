@@ -1,0 +1,21 @@
+--Fills title and specialty domain tables
+INSERT INTO Title (Abbreviation, Name) VALUES
+	('DR', 'Doctor'),
+	('RN', 'Registered Nurse'),
+	('LPN', 'Licensed Practical Nurse'),
+	('NP', 'Nurse Practitioner'),
+	('MA', 'Medical Assistant'),
+	('TP', 'Therapist'),
+	('DDS', 'Doctor of Dental Surgery'),
+	('ND', 'Nutritionist/Dietitian'),
+	('PA', 'Physician Assistant');
+
+INSERT INTO Specialty (Abbreviation, SpecialtyName) VALUES
+	('CARD', 'Cardiology'),
+	('NEUR', 'Neurology'),
+	('RAD', 'Radiology'),
+	('PHY', 'Physical'),
+	('RES', 'Respitory'),
+	('DERM', 'Dermatology'),
+	('ORTH', 'Orthopedics');
+
