@@ -41,7 +41,7 @@ def ChangeEmploymentStatus(cursor, employeeNum):
     employeeNum (string)    : The unique identifier for an employee.
 
     Returns:
-    {NewEmploymentStatus or NA}
+    boolean
     """
     
 def CancelShift(cursor, employeeNum, shiftStart):

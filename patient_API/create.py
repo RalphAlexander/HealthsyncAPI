@@ -1,3 +1,5 @@
+from util import GenerateAppointmentNum
+
 def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1, address2 = None, postalCode = None):
     """
     Description: 
@@ -33,11 +35,16 @@ def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1
         VALUES (%s, %s);
         """
         
+        cursor.execute(getPatientQuery, (patientNum, ))
+        patientResult = cursor.fetchone()
+        if not patientResult:
+            print("Patient number not found.")
+            return False
+        patientId = patientResult[0]
+        
+        
         cursor.execute(insertAddress, (city, stateAbbreviation, address1, address2, postalCode,))
         addressId = cursor.fetchone()[0]
-        
-        cursor.execute(getPatientQuery, (patientNum, ))
-        patientId = cursor.fetchone()[0]
         
         cursor.execute(insertPatient, (patientId, addressId,))
         connection.commit()
@@ -54,6 +61,7 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
     Given the Employee Num of the provider, date and time, purpose, and optionally patient
     number, creates a new appointment at that time. Return successful if appointment created,
     returns unsuccessful if provider unavailable at the given time or patientNum not found. 
+    Duration of the appointment is set to 30 minutes by default.
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
@@ -69,55 +77,72 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
     """
 
     getEmployeeAvailability = """
-    SELECT * FROM Appointment
-    WHERE EmployeeNum = %s AND DateTime = %s;
+    SELECT * 
+    FROM HealthCareProvider hcp
+        JOIN AppointmentProviders ap ON hcp.Id = ap.HealthCareProviderId
+        JOIN Appointment a ON a.id = ap.AppointmentId
+    WHERE hcp.EmployeeNum ILIKE %s AND a.date = %s;
     """
     
     getPatientId = """
     SELECT ID FROM Patient
-    WHERE PatientNum = %s;
+    WHERE PatientNum ILIKE %s;
     """
     
     getEmployeeId = """
-    SELECT ID FROM Employee
-    WHERE EmployeeNum = %s;
+    SELECT ID FROM HealthCareProvider
+    WHERE EmployeeNum ILIKE %s;
     """
     
     insertAppointment = """
-    INSERT INTO Appointment (EmployeeID, PatientID, DateTime, Purpose)
-    VALUES (%s, %s, %s, %s);
+    INSERT INTO Appointment (PatientID, date, Purpose, AppointmentNum, Duration)
+    VALUES (%s, %s, %s, %s, %s)
+    RETURNING ID;
+    """
+    
+    insertAppointmentProvider = """
+    INSERT INTO AppointmentProviders (HealthCareProviderID, AppointmentID)
+    VALUES (%s, %s)
     """
     
     try:
         # Check if the provider is available
-        cursor.execute(getEmployeeAvailability, (employeeNum, dateTime))
+        cursor.execute(getEmployeeAvailability, (employeeNum, dateTime,))
         if cursor.fetchone():
             print("Provider is unavailable at the given time.")
             return False
-        
         patientId = None
         
         # If a patientNum is provided, check if the patient exists
         if patientNum:
-            cursor.execute(getPatientId, (patientNum))
+            cursor.execute(getPatientId, (patientNum,))
             patientResult = cursor.fetchone()
             if not patientResult:
-                print("Patient number not found.")
+                print("PatientNum not found.")
                 return False
             patientId = patientResult[0]
         
         
         # Check if the employee exists
-        cursor.execute(getEmployeeId, (employeeNum))
+        cursor.execute(getEmployeeId, (employeeNum,))
         employeeResult = cursor.fetchone()
         if not employeeResult:
-            print("Employee number not found.")
+            print("EmployeeNum not found.")
             return False
         employeeId = employeeResult[0]
         
         # Insert the new appointment, handling null patientNum
-        cursor.execute(insertAppointment, (employeeId, patientId, dateTime, purpose))
-        
+        appointmentNum = GenerateAppointmentNum(cursor)
+        duration = "30 minutes"
+        cursor.execute(insertAppointment, (patientId, dateTime, purpose, appointmentNum, duration))
+        insertAppointmentResult = cursor.fetchone()
+        if not insertAppointmentResult:
+            print("Error inserting appointment.")
+            return False
+        appointmentId = insertAppointmentResult[0]
+        # Insert into AppointmentProviders
+        cursor.execute(insertAppointmentProvider, (employeeId, appointmentId,))
+
         # Commit the transaction
         connection.commit()
         print("Appointment successfully scheduled.")

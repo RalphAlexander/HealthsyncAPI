@@ -23,12 +23,12 @@ def main():
     try:
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
-
+        if (len(sys.argv) < 2):
+            print("Too few arguments")
+            return 
+        
         # get medical records 
         if (len(sys.argv) == 3 and sys.argv[1] == "ViewMedicalRecordsByPatient"):
-    
-
-            # Join the command line arguments into a single string and then split by ", "
             parameters = sys.argv[2].split(", ")
 
             patient_num = parameters[0]
@@ -205,8 +205,7 @@ def main():
                 address2 = parameters[4]
             if len(parameters) == 6:
                 postalCode = parameters[5]
-            # TODO:DEBUG
-            # print({"patientNum: ":patientNum,"city: ": city, "stateAbbreviation: " : stateAbbreviation, "address1: ":address1, "address2:":address2, "postalCode:":postalCode})
+
             isSuccessful = AddAddress(cursor, conn, patientNum, city, stateAbbreviation, address1, address2, postalCode)
             if isSuccessful:
                 print("Address added successfully")
@@ -214,6 +213,14 @@ def main():
             print("Address failed to be added")
             return
         
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ScheduleAppointment"):
+            parameters = sys.argv[2].split(", ")
+            employeeNum, dateTime, purpose = parameters[0:3]
+            patientNum = None
+            if len(parameters) == 4:
+                employeeNum = parameters[3]
+            print(parameters)
+            isSuccessful = ScheduleAppointment(cursor, conn, employeeNum, dateTime, purpose, patientNum)
         else:
             print("invalid function or parameters")
         
