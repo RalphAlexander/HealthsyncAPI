@@ -12,7 +12,8 @@ def CreateHealthCareProvider(cursor, firstName, lastName, titleAbbreviation, dep
     departmentAbbreviation (string) : Department of the provider to be added.
     specialtyAbbreviation (string)  : Specialty of the provider to be added.
 
-    Return {EmployeeNum}
+    Returns:
+    boolean: Returns true if HealthCareProvider successfully created
     """
     
 def CreateShift(cursor, connection, employeeNum, shiftStart, shiftEnd):
@@ -30,7 +31,7 @@ def CreateShift(cursor, connection, employeeNum, shiftStart, shiftEnd):
     shiftEnd (string)       : A datetime formatted in any accepted format.
     
     Returns:
-    {isSuccessful}
+    boolean: Returns true if shift successfully created
     """
 
 def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, city, stateAbbreviation, address1, address2 = None, postalCode = None, email = None, phone = None):
@@ -56,7 +57,7 @@ def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, city, 
     phone (string)              : Phone number of patient to be added in any accepted date format.
     
     Returns: 
-    {Patient number}
+    {PatientNum}
     """
     
 def CreateMedicalRecord(cursor, connection, appointmentNum, recordText):
@@ -72,7 +73,7 @@ def CreateMedicalRecord(cursor, connection, appointmentNum, recordText):
     recordText (string)         : Record of the medical record.
 
     Returns:
-    {isSuccessful}
+    boolean: Returns true if medical record successfully created
     """
 
 def CreatePrescription(cursor, connection, medicalRecordNum, medicationAbbreviation, doseInMilligrams, frequency, endDate):
@@ -91,5 +92,5 @@ def CreatePrescription(cursor, connection, medicalRecordNum, medicationAbbreviat
     endDate (string)                : A date of when to stop taking the medication in any accepted date format.
 
     Returns:
-    {isSuccessful}
+    boolean: Returns true if prescription successfully created
     """

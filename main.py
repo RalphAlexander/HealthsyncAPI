@@ -277,6 +277,11 @@ def main():
             appointmentNum = parameters[0]
             isSuccessful = CancelAppointment(cursor, conn, appointmentNum)
             
+        elif (len(sys.argv) == 3 and function == "ChangeEmploymentStatus"):
+            parameters = sys.argv[2].split(", ")
+            employeeNum = parameters[0]
+            isSuccessful = ChangeEmploymentStatus(cursor, conn, employeeNum)
+            
         else:
             print("invalid function or parameters")
         

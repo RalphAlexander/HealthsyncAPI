@@ -291,6 +291,7 @@ def EditAppointment(cursor, connection, appointmentNum, newDate = None, newDurat
         connection.rollback()
         return False
     
+# tested and works
 def RemoveProviderFromAppointment(cursor, connection, employeeNum, appointmentNum):
     """
     Given an appointment number and employee number, removes the provider from a scheduled appointment.

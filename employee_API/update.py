@@ -12,7 +12,8 @@ def EditSpecialty(cursor, connection, employeeNum, specialityName):
     employeeNum (string)    : The unique identifier for an employee.
     specialtyName (string)  : Name of the new speciality to be changed.
 
-    Return {added, removed or unsuccesful}
+    Returns:
+    {added, removed or unsuccesful}
     """
     
 def EditHealthCareProvider(cursor, connection, employeeNum, title = None, firstName = None, lastName = None, departmentAbbreviation = None):
@@ -32,7 +33,8 @@ def EditHealthCareProvider(cursor, connection, employeeNum, title = None, firstN
     lastName (string)               : Last name of the health care provider that will be changed.
     departmentAbbreviation (string) : Department of the health care provider that will be changed.
 
-    Returns {isSuccessful}
+    Returns:
+    boolean: Returns true if HealthCareProvider successfully edited
     """
     
 def ChangeEmploymentStatus(cursor, connection, employeeNum):
@@ -47,8 +49,46 @@ def ChangeEmploymentStatus(cursor, connection, employeeNum):
     employeeNum (string)    : The unique identifier for an employee.
 
     Returns:
-    boolean
+    boolean: Returns true if Employee status successfully updated
     """
+    
+    getEmployeeQuery = """
+    SELECT Id, CurrentlyEmployed
+    FROM HealthCareProvider
+    WHERE employeeNum ILIKE %s
+    """
+    updateEmployment = """
+    UPDATE HealthCareProvider
+    SET CurrentlyEmployed = NOT CurrentlyEmployed
+    WHERE ID = %s
+    """
+    
+    try:
+        # check to see if employee with employeeNum exists
+        cursor.execute(getEmployeeQuery, (employeeNum,))
+        employeeResults = cursor.fetchone()
+        if not employeeResults:
+            print(f"Health Care Provider {employeeNum} does not exist.")
+            return False
+        employeeId = employeeResults[0]
+        isEmployed = not employeeResults[1]
+        
+        cursor.execute(updateEmployment, (employeeId,))
+        employementStatus = "employed" if isEmployed else "unemployed"
+        if cursor.rowcount > 0:
+            print(f"Update successful. Employee {employeeNum} is now {employementStatus}")
+            connection.commit()
+            return True
+        
+        print("Update failed. No rows were affected.")
+        connection.rollback()  # Optional: Rollback if you consider the update critical and want to undo any potential changes
+        return False
+    
+    except Exception as e:
+        # In case of any exception, print the error and rollback the transaction.
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return False
     
 def CancelShift(cursor, connection, employeeNum, shiftStart):
     """
@@ -64,7 +104,7 @@ def CancelShift(cursor, connection, employeeNum, shiftStart):
     shiftStart (string)     : The start time of the shift to be canceled.
 
     Returns:
-    {isSuccessful}
+    boolean: Returns true if shift successfully canceled
     """
     
 
