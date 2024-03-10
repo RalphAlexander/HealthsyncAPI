@@ -1,5 +1,5 @@
 # TODO: Needs to be tested
-def ViewAllPrescription(cursor, patientNum):
+def ViewAllPrescriptions(cursor, patientNum):
     """
     Description:
     Given a patient Number, return all active prescriptions for that patient.
@@ -41,7 +41,7 @@ def ViewAllPrescription(cursor, patientNum):
         print(f"Error retrieving medical records: {e}")
         return []
 
-def ViewProviderAppt(cursor, employeeNum, date = None):
+def ViewProviderAppt(cursor, employeeNum, date = None):     # TESTED 1
     """
     Description: 
     Given an employee number and optional date, return all appointments for that provider.
@@ -54,6 +54,52 @@ def ViewProviderAppt(cursor, employeeNum, date = None):
     Returns:
     {AppointmentNum, PatientName, Date, Duration, Purpose}
     """
+    try:
+        if (date is None):
+            query = """
+            SELECT a.AppointmentNum, p.FirstName, p.LastName, p.PatientNum, a.Date, a.Duration, a.Purpose
+            FROM Patient p
+                JOIN Appointment a ON (p.ID = a.PatientID)
+                JOIN AppointmentProviders ap ON (a.ID = ap.AppointmentID)
+                JOIN HealthCareProvider hc ON (ap.HealthCareProviderID = hc.ID)
+            WHERE hc.employeeNum = %s;
+            """
+            cursor.execute(query, (employeeNum,))
+        else:
+            query = """
+            SELECT a.AppointmentNum, p.FirstName, p.LastName, p.PatientNum, a.Date, a.Duration, a.Purpose
+            FROM Patient p
+                JOIN Appointment a ON (p.ID = a.PatientID)
+                JOIN AppointmentProviders ap ON (a.ID = ap.AppointmentID)
+                JOIN HealthCareProvider hc ON (ap.HealthCareProviderID = hc.ID)
+            WHERE hc.employeeNum = %s AND CAST(a.date AS DATE) = CAST(%s AS DATE);
+            """
+            cursor.execute(query, (employeeNum, date,))
+        appointments = cursor.fetchall()
+        if len(appointments) == 0:
+            print("Employee with EmployeeNum {employeeNum} does not exist")
+            return
+    
+        # Format the Date and Duration fields for better readability
+        formatted_appointments = []
+        for record in appointments:
+            appointment_num, first_name, last_name, patient_num, date, duration, purpose = record
+
+            # Format the Date field
+            formatted_date = date.strftime('%Y-%m-%d %H:%M:%S') if date else 'N/A'
+
+            # Format the Duration field
+            formatted_duration = f"{duration.seconds // 3600} hours {duration.seconds % 3600 // 60} minutes" if duration else 'N/A'
+
+            # Replace the original Date and Duration with the formatted ones in the record
+            formatted_record = (appointment_num, first_name, last_name, patient_num, formatted_date, formatted_duration, purpose)
+            formatted_appointments.append(formatted_record)
+
+        return formatted_appointments
+
+    except Exception as e:
+        print(f"Error retrieving patient info: {e}")
+        return []
 
 def ViewDepartmentAppt(cursor, departmentAbbreviation, startDate = None, endDate = None):
     """
