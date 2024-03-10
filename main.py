@@ -1,8 +1,13 @@
 import os
 import sys
 import psycopg2
-import get_API
 from dotenv import load_dotenv
+from employee_API.create import *
+from employee_API.get import *
+from employee_API.update import *
+from patient_API.create import *
+from patient_API.get import *
+from patient_API.update import *
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,9 +25,9 @@ def main():
         cursor = conn.cursor()
 
         # get medical records 
-        if (len(sys.argv) == 3 and sys.argv[1] == "get_medical_records"):
+        if (len(sys.argv) == 3 and sys.argv[1] == "ViewMedicalRecordsByPatient"):
             patient_num = sys.argv[2]
-            records = get_API.get_medical_records(patient_num, cursor)
+            records = ViewMedicalRecordsByPatient(cursor, patient_num)
             print("\n--| Patient Number | Medical Record Num | Appointment Number | Date | Record |--")
             for record in records:
                 print(record);
@@ -32,9 +37,9 @@ def main():
                 print("Patient has no medical record")
 
         # view current prescriptions
-        elif (len(sys.argv) == 3 and sys.argv[1] == "view_current_prescriptions"):
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ViewCurrentPrescriptions"):
             patient_num = sys.argv[2]
-            prescriptions = get_API.view_current_prescriptions(patient_num, cursor)
+            prescriptions = ViewCurrentPrescriptions(cursor, patient_num)
             print("\n--| Medication Name | Dose in Milligrams | Frequency | End Date |--")
             for prescription in prescriptions:
                 print(prescription);
@@ -44,9 +49,9 @@ def main():
                 print("Patient has no current prescriptions")
 
         # view all prescriptions
-        elif (len(sys.argv) == 3 and sys.argv[1] == "view_all_prescriptions"):
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ViewAllPrescription"):
             patient_num = sys.argv[2]
-            prescriptions = get_API.view_all_prescriptions(patient_num, cursor)
+            prescriptions = ViewAllPrescription(cursor, patient_num)
             print("\n--| Medication Name | Dose in Milligrams | Frequency | End Date |--")
             for prescription in prescriptions:
                 print(prescription);
@@ -56,9 +61,9 @@ def main():
                 print("Patient has no prescriptions")
         
         # view patient info
-        elif (len(sys.argv) == 3 and sys.argv[1] == "view_patient_info"):
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ViewPatientInfo"):
             patient_num = sys.argv[2]
-            patientinfo = get_API.view_patient_info(patient_num, cursor)
+            patientinfo = ViewPatientInfo(cursor, patient_num)
             print("\n--| First Name | Last Name | Email | Phone | Sex | Date of Birth | Address 1 | Address 2 | Postal Code | City | State Abbreviation |--")
             for patientinfostuff in patientinfo:
                 print(patientinfostuff);
@@ -68,8 +73,8 @@ def main():
                 print("Patient has no info")
 
         # list all titles
-        elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_titles"):
-            titles = get_API.list_all_titles(cursor)
+        elif (len(sys.argv) == 2 and sys.argv[1] == "ListAllTitles"):
+            titles = ListAllTitles(cursor)
             print("\n--| Title Abbreviation | Title Name |--")
             for title in titles:
                 print(title);
@@ -79,8 +84,8 @@ def main():
                 print("There are no current titles")
 
         # list all specialties
-        elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_specialties"):
-            specialties = get_API.list_all_specialties(cursor)
+        elif (len(sys.argv) == 2 and sys.argv[1] == "ListAllSpecialties"):
+            specialties = ListAllSpecialties(cursor)
             print("\n--| Specialty Abbreviation | Specialty Name |--")
             for specialty in specialties:
                 print(specialty);
@@ -90,8 +95,8 @@ def main():
                 print("There are no current specialties")
 
         # list all departments
-        elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_departments"):
-            departments = get_API.list_all_departments(cursor)
+        elif (len(sys.argv) == 2 and sys.argv[1] == "ListAllDepartments"):
+            departments = ListAllDepartments(cursor)
             print("\n--| Department Abbreviation | Department Name | Check In Office Building | Check In Office Room Number |--")
             for department in departments:
                 print(department);
@@ -100,33 +105,33 @@ def main():
             if len(departments) == 0:
                 print("There are no current departments")
 
-        # list all check in offices
-        elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_checkinoffices"):
-            checkinoffices = get_API.list_all_checkinoffices(cursor)
-            print("\n--| Check In Office Building | Check In Office Room Number |--")
-            for checkinoffice in checkinoffices:
-                print(checkinoffice);
-            print("\n")
+        # # list all check in offices
+        # elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_checkinoffices"):
+        #     checkinoffices = list_all_checkinoffices(cursor)
+        #     print("\n--| Check In Office Building | Check In Office Room Number |--")
+        #     for checkinoffice in checkinoffices:
+        #         print(checkinoffice);
+        #     print("\n")
             
-            if len(checkinoffices) == 0:
-                print("There are no current checkinoffices")
+        #     if len(checkinoffices) == 0:
+        #         print("There are no current checkinoffices")
 
-        # list all check in employees
-        elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_employees"):
-            employees = get_API.list_all_employees(cursor)
-            print("\n--| First Name | Last Name | Employee Number | Title |--")
-            for employee in employees:
-                print(employee);
-            print("\n")
+        # # list all check in employees
+        # elif (len(sys.argv) == 2 and sys.argv[1] == "list_all_employees"):
+        #     employees = list_all_employees(cursor)
+        #     print("\n--| First Name | Last Name | Employee Number | Title |--")
+        #     for employee in employees:
+        #         print(employee);
+        #     print("\n")
             
-            if len(employees) == 0:
-                print("There are no current employees")
+        #     if len(employees) == 0:
+        #         print("There are no current employees")
 
         # find employee/employees that match                       doesnt take third param but should
-        elif (len(sys.argv) == 4 and sys.argv[1] == "find_employees"):
+        elif (len(sys.argv) == 4 and sys.argv[1] == "FindEmployee"):
             first_name = sys.argv[2]
             last_name = sys.argv[3]
-            records = get_API.find_employees(first_name, last_name, cursor)
+            records = FindEmployee(cursor, first_name, last_name)
             print("\n--| First Name | Last Name | Employee Number | Title |--")
             for record in records:
                 print(record);
@@ -136,10 +141,10 @@ def main():
                 print("There are no employees that match")
 
         # find patients/patients that match                       doesnt take third param but should
-        elif (len(sys.argv) == 4 and sys.argv[1] == "find_patients"):
+        elif (len(sys.argv) == 4 and sys.argv[1] == "FindPatient"):
             first_name = sys.argv[2]
             last_name = sys.argv[3]
-            records = get_API.find_patients(first_name, last_name, cursor)
+            records = FindPatient(cursor,first_name, last_name)
             print("\n--| First Name | Last Name | Patient Number | Date of Birth | First Address | City |--")
             for record in records:
                 print(record);
