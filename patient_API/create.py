@@ -34,7 +34,6 @@ def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1
         INSERT INTO PatientAddresses (PatientID, AddressID)
         VALUES (%s, %s);
         """
-        
         cursor.execute(getPatientQuery, (patientNum, ))
         patientResult = cursor.fetchone()
         if not patientResult:
