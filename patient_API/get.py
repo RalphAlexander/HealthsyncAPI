@@ -97,52 +97,18 @@ def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = None, endDate = 
     """
     
     try:
-        # if startDate == None and endDate == None
-        if not startDate and not endDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum,))
-        # if startDate == None and endDate != None
-        if not startDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date <= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, endDate))
-        # if startDate != None and endDate == None
-        if not endDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date >= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, startDate))
-        
-        # if startDate != None and endDate != None
-        else:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date >= %s and mr.date <= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, startDate, endDate))
-            
+        query = """
+        SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+        FROM medicalrecord mr
+            JOIN appointment a ON mr.appointmentid = a.id
+            JOIN patient p ON p.id = a.patientid
+        WHERE p.patientnum = %s
+            AND (%s IS NULL OR mr.date >= %s)
+            AND (%s IS NULL OR mr.date <= %s)
+        ORDER BY mr.date DESC;
+        """
+        cursor.execute(query, (patientNum, startDate, startDate, endDate, endDate))
+                
         records = cursor.fetchall()
         if len(records) == 0:
             print("Patient does not have any medical records with the given parameters")

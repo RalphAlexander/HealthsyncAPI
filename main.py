@@ -26,15 +26,22 @@ def main():
 
         # get medical records 
         if (len(sys.argv) == 3 and sys.argv[1] == "ViewMedicalRecordsByPatient"):
-            patient_num = sys.argv[2]
-            records = ViewMedicalRecordsByPatient(cursor, patient_num)
+            
+            parameters = sys.argv[2].split(",")
+            patient_num = parameters[0]
+            startDate = None
+            endDate = None
+            if len(parameters) == 2:
+                startDate = parameters[1]
+            if len(parameters) == 3:
+                endDate = parameters[2]
+            
+            records = ViewMedicalRecordsByPatient(cursor, patient_num, startDate, endDate)
             print("\n--| Patient Number | Medical Record Num | Appointment Number | Date | Record |--")
             for record in records:
                 print(record);
             print("\n")
             
-            if len(records) == 0:
-                print("Patient has no medical record")
 
         # view current prescriptions
         elif (len(sys.argv) == 3 and sys.argv[1] == "ViewCurrentPrescriptions"):
