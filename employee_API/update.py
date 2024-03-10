@@ -1,4 +1,4 @@
-def EditSpecialty(cursor, employeeNum, specialityName):
+def EditSpecialty(cursor, connection, employeeNum, specialityName):
     """
     Description: 
     Given an employee number and specialty, adds a specialty to an employees file or removes a
@@ -7,13 +7,15 @@ def EditSpecialty(cursor, employeeNum, specialityName):
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
+                              back the transaction.
     employeeNum (string)    : The unique identifier for an employee.
     specialtyName (string)  : Name of the new speciality to be changed.
 
     Return {added, removed or unsuccesful}
     """
     
-def EditHealthCareProvider(cursor, employeeNum, title = None, firstName = None, lastName = None, departmentAbbreviation = None):
+def EditHealthCareProvider(cursor, connection, employeeNum, title = None, firstName = None, lastName = None, departmentAbbreviation = None):
     """
     Description: 
     Given an employee number and information to update, update given employee file to match the
@@ -22,6 +24,8 @@ def EditHealthCareProvider(cursor, employeeNum, title = None, firstName = None, 
 
     Parameters:
     cursor (psycopg2)               : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)           : A connection object associated with the database session. This object is used to commit or roll
+                                      back the transaction.
     employeeNum (string)            : The unique identifier for an employee.
     title (string)                  : Title of the health care provider that will be changed.
     firstName (string)              : First name of the health care provider that will be changed.
@@ -31,20 +35,22 @@ def EditHealthCareProvider(cursor, employeeNum, title = None, firstName = None, 
     Returns {isSuccessful}
     """
     
-def ChangeEmploymentStatus(cursor, employeeNum):
+def ChangeEmploymentStatus(cursor, connection, employeeNum):
     """
     Description:
     Changes the employment status of the given employee number. Returns their new employment status, or “NA” if employee not found.
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
+                              back the transaction.
     employeeNum (string)    : The unique identifier for an employee.
 
     Returns:
     boolean
     """
     
-def CancelShift(cursor, employeeNum, shiftStart):
+def CancelShift(cursor, connection, employeeNum, shiftStart):
     """
     Description: 
     Given an employee number and shift start time, sets the matching shifts duration to 0 minutes.
@@ -52,6 +58,8 @@ def CancelShift(cursor, employeeNum, shiftStart):
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
+                              back the transaction.
     employeeNum (string)    : The unique identifier for an employee.
     shiftStart (string)     : The start time of the shift to be canceled.
 
@@ -60,7 +68,7 @@ def CancelShift(cursor, employeeNum, shiftStart):
     """
     
 
-def CancelPrescription(cursor, patientNum, medicationAbbreviation):
+def CancelPrescription(cursor, connection, patientNum, medicationAbbreviation):
     """
     Description: 
     Given a patient number and medication abbreviation, it modifies any active prescriptions of 
@@ -69,6 +77,8 @@ def CancelPrescription(cursor, patientNum, medicationAbbreviation):
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
+                              back the transaction.
     patientNum (string)     : The unique identifier for a patient.
     medicationAbbreviation (string) : Abbreviation of the name of the medication.
     
