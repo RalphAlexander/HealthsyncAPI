@@ -26,12 +26,15 @@ def main():
 
         # get medical records 
         if (len(sys.argv) == 3 and sys.argv[1] == "ViewMedicalRecordsByPatient"):
-            
-            parameters = sys.argv[2].split(",")
+    
+
+            # Join the command line arguments into a single string and then split by ", "
+            parameters = sys.argv[2].split(", ")
+
             patient_num = parameters[0]
             startDate = None
             endDate = None
-            if len(parameters) == 2:
+            if len(parameters) <= 2:
                 startDate = parameters[1]
             if len(parameters) == 3:
                 endDate = parameters[2]
@@ -190,6 +193,26 @@ def main():
             
             if len(records) == 0:
                 print("There are no patients that match")
+        
+        elif (len(sys.argv) == 3 and sys.argv[1] == "AddAddress"):
+            raw_parameters = sys.argv[2].split(", ")
+            # Convert 'None' string to None type
+            parameters = [None if param == 'None' else param for param in raw_parameters]
+            patientNum, city, stateAbbreviation, address1 = parameters[0:4]
+            address2 = None
+            postalCode = None
+            if len(parameters) == 5:
+                address2 = parameters[4]
+            if len(parameters) == 6:
+                postalCode = parameters[5]
+            # TODO:DEBUG
+            # print({"patientNum: ":patientNum,"city: ": city, "stateAbbreviation: " : stateAbbreviation, "address1: ":address1, "address2:":address2, "postalCode:":postalCode})
+            isSuccessful = AddAddress(cursor, conn, patientNum, city, stateAbbreviation, address1, address2, postalCode)
+            if isSuccessful:
+                print("Address added successfully")
+                return
+            print("Address failed to be added")
+            return
         
         else:
             print("invalid function or parameters")
