@@ -1,4 +1,4 @@
-def CreateProvider(cursor, firstName, lastName, titleAbbreviation, departmentAbbreviation, specialtyAbbreviation):
+def CreateHealthCareProvider(cursor, firstName, lastName, titleAbbreviation, departmentAbbreviation, specialtyAbbreviation):
     """
     Description: 
     Given a first name, last name, title, department, and specialty, add a new Employee in the database. Returns the employee number.
