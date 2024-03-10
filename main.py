@@ -23,18 +23,28 @@ def main():
     try:
         conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
-
+        if (len(sys.argv) < 2):
+            print("Too few arguments")
+            return 
+        
         # get medical records 
         if (len(sys.argv) == 3 and sys.argv[1] == "ViewMedicalRecordsByPatient"):
-            patient_num = sys.argv[2]
-            records = ViewMedicalRecordsByPatient(cursor, patient_num)
+            parameters = sys.argv[2].split(", ")
+
+            patient_num = parameters[0]
+            startDate = None
+            endDate = None
+            if len(parameters) <= 2:
+                startDate = parameters[1]
+            if len(parameters) == 3:
+                endDate = parameters[2]
+            
+            records = ViewMedicalRecordsByPatient(cursor, patient_num, startDate, endDate)
             print("\n--| Patient Number | Medical Record Num | Appointment Number | Date | Record |--")
             for record in records:
                 print(record);
             print("\n")
             
-            if len(records) == 0:
-                print("Patient has no medical record")
 
         # view current prescriptions
         elif (len(sys.argv) == 3 and sys.argv[1] == "ViewCurrentPrescriptions"):
@@ -71,6 +81,37 @@ def main():
             
             if len(patientinfo) == 0:
                 print("Patient has no info")
+
+        # view patients future appointments
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ViewFutureAppt"):
+            patient_num = sys.argv[2]
+            patientinfo = ViewFutureAppt(cursor, patient_num)
+            print("\n--| Appointment Number | Check In Building | Check In Room Number | Date | Duration | Purpose | Provider First Name | Provider Last Name | Provider Number |--")
+            for patientinfostuff in patientinfo:
+                print(patientinfostuff);
+            print("\n")
+            
+            if len(patientinfo) == 0:
+                print("Patient has no info")
+
+        # view providers appointments
+        elif (len(sys.argv) >= 3 and sys.argv[1] == "ViewProviderAppt"):
+            parameters = sys.argv[2:]
+            employee_num = parameters[0]
+            date = None
+            if len(parameters) == 2:
+                date = parameters[1]
+            providerAppts = ViewProviderAppt(cursor, employee_num, date)
+            print("\n--| Appointment Number | Patient First Name | Patient Last Name | Patient Number | Date | Duration | Purpose |--")
+
+            if (providerAppts is None):
+                print("Provider has no Appointments\n")
+                return
+            
+            for providerAppt in providerAppts:
+                print(providerAppt);
+            print("\n")
+
 
         # list all titles
         elif (len(sys.argv) == 2 and sys.argv[1] == "ListAllTitles"):
@@ -153,6 +194,33 @@ def main():
             if len(records) == 0:
                 print("There are no patients that match")
         
+        elif (len(sys.argv) == 3 and sys.argv[1] == "AddAddress"):
+            raw_parameters = sys.argv[2].split(", ")
+            # Convert 'None' string to None type
+            parameters = [None if param == 'None' else param for param in raw_parameters]
+            patientNum, city, stateAbbreviation, address1 = parameters[0:4]
+            address2 = None
+            postalCode = None
+            if len(parameters) == 5:
+                address2 = parameters[4]
+            if len(parameters) == 6:
+                postalCode = parameters[5]
+
+            isSuccessful = AddAddress(cursor, conn, patientNum, city, stateAbbreviation, address1, address2, postalCode)
+            if isSuccessful:
+                print("Address added successfully")
+                return
+            print("Address failed to be added")
+            return
+        
+        elif (len(sys.argv) == 3 and sys.argv[1] == "ScheduleAppointment"):
+            parameters = sys.argv[2].split(", ")
+            employeeNum, dateTime, purpose = parameters[0:3]
+            patientNum = None
+            if len(parameters) == 4:
+                employeeNum = parameters[3]
+            print(parameters)
+            isSuccessful = ScheduleAppointment(cursor, conn, employeeNum, dateTime, purpose, patientNum)
         else:
             print("invalid function or parameters")
         

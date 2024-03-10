@@ -1,4 +1,4 @@
-def EditPatient(cursor, patientNum, firstName = None, lastName = None, email = None, phone = None):
+def EditPatient(cursor, connection, patientNum, firstName = None, lastName = None, email = None, phone = None):
     """
     Description: 
     Given the patient number and new information to update, updates the patient file with the new
@@ -6,6 +6,8 @@ def EditPatient(cursor, patientNum, firstName = None, lastName = None, email = N
 
     Parameters:
     cursor (psycopg2)       : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
+                              back the transaction.
     patientNum (string)     : The unique identifier for a patient.
     firstName (string)      : First name of the patient that will be changed.
     lastName (string)       : Last name of the patient that will be changed.
@@ -15,7 +17,7 @@ def EditPatient(cursor, patientNum, firstName = None, lastName = None, email = N
     Return {isSuccessful}
     """
     
-def RemoveAddress(cursor, patientNum, city, stateAbbreviation, address1, PostalCode = None):
+def RemoveAddress(cursor, connection, patientNum, city, stateAbbreviation, address1, PostalCode = None):
     
     """
     Description: 
@@ -24,6 +26,8 @@ def RemoveAddress(cursor, patientNum, city, stateAbbreviation, address1, PostalC
 
     Parameters:
     cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
     patientNum (string)         : The unique identifier for a patient.
     city (string)               : City of home address of patient to be added.
     stateAbbreviation (string)  : State of home address of patient to be added.
@@ -34,7 +38,7 @@ def RemoveAddress(cursor, patientNum, city, stateAbbreviation, address1, PostalC
     {isSuccessful}
     """
     
-def EditAppointmentDate(cursor, appointmentNum, newDateTime):
+def EditAppointmentDate(cursor, connection, appointmentNum, newDateTime):
     """
     Description: 
     Given an appointment number and a new date and time, updates the appointment to the scheduled
@@ -44,6 +48,8 @@ def EditAppointmentDate(cursor, appointmentNum, newDateTime):
 
     Parameters: 
     cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
     appointmentNum (string)     : The unique identifier for an appointment.
     newDateTime (string)        : The new datetime to set the appointment to in any accepted dateTime format.
 
@@ -51,7 +57,7 @@ def EditAppointmentDate(cursor, appointmentNum, newDateTime):
     {isSuccessful}
     """
 
-def EditAppointment(cursor, appointmentNum, newDate = None, newDuration = None, newPurpose = None, employeeNum = None):
+def EditAppointment(cursor, connection, appointmentNum, newDate = None, newDuration = None, newPurpose = None, employeeNum = None):
     """
     Description: 
     Given an appointment number, and the information to change on the appointment, it updates
@@ -60,6 +66,8 @@ def EditAppointment(cursor, appointmentNum, newDate = None, newDuration = None, 
 
     Parameters:
     cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
     appointmentNum (string)     : The unique identifier for an appointment.
     newDate (string)            : The new date to set the appointment to in any accepted date format to set to.
     newDuration (int)           : The new duration of the appointment in minutes to set to.
@@ -70,13 +78,15 @@ def EditAppointment(cursor, appointmentNum, newDate = None, newDuration = None, 
     {isSuccessful}
     """
     
-def RemoveProviderFromAppointment(cursor, employeeNum, appointmentNum):
+def RemoveProviderFromAppointment(cursor, connection, employeeNum, appointmentNum):
     """
     Given an appointment number and employee number, removes the provider from a scheduled appointment.
     Returns successful if removed, returns unsuccessful if provider was not scheduled for that appointment. 
 
     Parameters:
     cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
     appointmentNum (string)     : The unique identifier for an appointment.
     employeeNum (string)        : The unique identifier for an employee.
 
@@ -84,7 +94,7 @@ def RemoveProviderFromAppointment(cursor, employeeNum, appointmentNum):
     {isSuccessful}
     """
 
-def CancelAppointment(cursor, appointmentNum):
+def CancelAppointment(cursor, connection, appointmentNum):
     """
     Description: 
     Given an appointment number, cancels appointments in the system by setting duration to 0 minutes. 
@@ -93,6 +103,8 @@ def CancelAppointment(cursor, appointmentNum):
 
     Parameters:
     cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
     appointmentNum (string)     : The unique identifier for an appointment.
 
     Returns:
