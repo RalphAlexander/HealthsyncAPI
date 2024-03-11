@@ -1,26 +1,22 @@
 --Fills department and checkinoffice tables
 INSERT INTO CheckInOffice (Building, RoomNumber) VALUES
-	('Main Hospital', '101A'),
-	('Specialty Clinic', '205'),
-	('Emergency Department', 'ER-03'),
-	('Outpatient Center', 'B102'),
-	('Maternity Ward', 'MW-12'),
-	('Surgery Center', 'SC-04'),
-	('Pediatric Clinic', 'P108'),
-	('Radiology Department', 'R301'),
-	('Cardiology Wing', 'C215'),
-	('Physical Therapy Unit', 'PT-09');
+	('Main Hospital', '1010'),
+	('Main Hospital', '2004'),
+	('West plaza', 'A302'),
+	('Arts Center', '103'),
+	('Emergency Room', '101'),
+	('Main Hospital', '601'),
+	('West Plaza', 'A102'),
+	('Arts Center', 'B208');
 
 INSERT INTO Department (Abbreviation, Name, CheckInOfficeID) VALUES
-	('ADM', 'Administration', 1),
-	('ER', 'Emergency Room', 3),
-	('GEN', 'General Medicine', 1),
-	('SUR', 'Surgery', 6),
-	('PED', 'Pediatrics', 7),
-	('CARD', 'Cardiology', 9),
-	('RAD', 'Radiology', 8),
-	('LAB', 'Laboratory', 1),
-	('DN', 'Dental', 2),
-	('PH', 'Physical Therapy', 10),
-	('NU', 'Nutrition', 1),
-	('AL', 'Allergy', 7);
+	('MedSurg', 'Medical Surgical', 6),
+	('ED', 'Emergency Room', 5),
+	('LD', 'Labor and delivery', 3),
+	('NICU', 'Neonatal Intensive Care', 7),
+	('ICU', 'Intensive Care', 1),
+	('NEUR', 'Nuerology', 4),
+	('Ortho', 'Orthopedics', 8),
+	('OR', 'Operating Room', 2);
+
+

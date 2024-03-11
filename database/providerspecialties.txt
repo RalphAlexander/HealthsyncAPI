@@ -1,3 +1,5 @@
 INSERT INTO providerspecialties(providerid, specialtyabbreviation) VALUES
-	(3, 'CARD'),
-	(10, 'RES');
+	(1, 'CARD'),
+	(7, 'PATH'),
+	(7, 'ORTH'),
+	(8, 'NEUR');
