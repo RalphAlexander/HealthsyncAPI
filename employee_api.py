@@ -129,6 +129,22 @@ def CancelShift():
     out = eupdate.CancelShift(cursor, conn, employee_num, date)
     print(out)
 
+def ViewShifts():
+    print("View employee shifts")
+    print("Enter employee number")
+    employee_num = input()
+    print("Enter start date (yyyy-mm-dd) (optional)")
+    start = input()
+    print("Enter end date (yyyy-mm-dd) (optional)")
+    end = input()
+    out = eget.ViewShifts(cursor, employee_num, start, end)
+    if (out is None or not len(out)):
+        print("No shifts during this date")
+        return
+    print("\nShift Start".ljust(26) + "Shift End".ljust(25))
+    for shift in out:
+        print(str(shift[3]).ljust(25) + str(shift[4]).ljust(25))
+
 #--- Patient functions ---
 def FindPatient():
     print("Find patient")
@@ -215,14 +231,12 @@ def removeAddress():
     pt_num = input()
     print("Enter street address")
     street = input()
-    print("Enter postal code (optional)")
-    post = input()
     print("Enter city")
     city = input()
     print("Enter state abbreviation (CO, NY, WA, etc.)")
     state = input()
-    out = pupdate.AddAddress(cursor, pt_num, street, post, city, state)
-    #TODO implement printing out
+    out = pupdate.RemoveAddress(cursor, conn, pt_num, street, city, state)
+    print(out)
 
 
 #--- Record functions ---
@@ -232,8 +246,8 @@ def CreateMedicalRecord():
     appt = input()
     print("Enter record text")
     text = input()
-    out = ecreate.CreateMedicalRecord(cursor, appt, text)
-    #TODO implement printing out
+    out = ecreate.CreateMedicalRecord(cursor, conn, appt, text)
+    print(out)
 
 def ViewMedicalRecordsByPatient():
     print("View medical records by patient")
@@ -243,8 +257,13 @@ def ViewMedicalRecordsByPatient():
     start = input()
     print("Enter end date to filter by (yyyy-mm-dd) (optional)")
     end = input()
-    out = eget.ViewMedicalRecordsByPatient(cursor, pt_num, start, end)
-    #TODO implement printing out
+    out = pget.ViewMedicalRecordsByPatient(cursor, pt_num, start, end)
+    if not out or not len(out):
+        print("No records found")
+        return
+    print("Record num".ljust(15) + "Appt num".ljust(10) + "Date".ljust(25) + "Record")
+    for record in out:
+        print(str(record[0]).ljust(15) + str(record[1]).ljust(10) + str(record[2])[:19].ljust(25) + record[3])
 
 #--- Prescription functions ---
 def CreatePrescription():
@@ -256,11 +275,11 @@ def CreatePrescription():
     print("Enter dose in mg")
     dose = input()
     print("Enter frequency in hours")
-    freq = input()
+    freq = input()+":00"
     print("Enter expiration date (yyyy-mm-dd)")
     expire = input()
-    out = ecreate.CreatePrescription(cursor, record, med, dose, freq, expire)
-    #TODO implement printing out
+    out = ecreate.CreatePrescription(cursor, conn, record, med, dose, freq, expire)
+    print(out)
 
 def CancelPrescription():
     print("Cancel prescription")
@@ -268,30 +287,47 @@ def CancelPrescription():
     pt_num = input()
     print("Enter medication abbreviation")
     med = input()
-    out = eupdate.CancelPrescription(cursor, pt_num, med)
-    #TODO implement printing out
+    out = eupdate.CancelPrescription(cursor, conn, pt_num, med)
+    print(out)
 
 def ViewCurrentPrescriptions():
     print("View current prescriptions")
     print("Enter patient number")
     pt_num = input()
     out = pget.ViewCurrentPrescriptions(cursor, pt_num)
-    #TODO implement printing out
+    if not out or not len(out):
+        print("No current prescriptions")
+        return
+    print("\nMedication Name".ljust(21) + "Dose (mg)".ljust(15) + "Frequency".ljust(15) + "End Date")
+    for pre in out:
+        print(pre[0].ljust(20) + str(pre[1]).ljust(15) + str(pre[2]).ljust(15) + str(pre[3]))
 
 def ViewAllPrescriptions():
     print("View all prescriptions")
     print("Enter patient number")
     pt_num = input()
     out = eget.ViewAllPrescriptions(cursor, pt_num)
-    #TODO implement printing out
+    if not out or not len(out):
+        print("No prescriptions found")
+        return
+        print("\nMedication Name".ljust(21) + "Dose (mg)".ljust(15) + "Frequency".ljust(15) + "End Date")
+    for pre in out:
+        print(pre[0].ljust(20) + str(pre[1]).ljust(15) + str(pre[2]).ljust(15) + str(pre[3]))
 
 #--- Appointment functions ---
 def ViewFutureAppointments():
     print("View future appointments")
     print("Enter patient number")
     pt_num = input()
-    out = pget.ViewFutureAppointments(cursor, pt_num)
-    #TODO implement printing out
+    out = pget.ViewFutureAppt(cursor, pt_num)
+    if (out is None or not len(out)):
+        print("No future appointments")
+        return
+    print("\nAppointment Number".ljust(24) + "Building".ljust(19) + "Room Number".ljust(15) + "Date".ljust(25) + 
+          "Duration".ljust(15) + "Purpose".ljust(30) + "Provider First".ljust(19) + "Last")
+    for appt in out:
+        print(str(appt[0]).ljust(23) + appt[1].ljust(19) + appt[2].ljust(15) + str(appt[3]).ljust(25) + 
+              str(appt[4]).ljust(15) + appt[5].ljust(30) + appt[6].ljust(19) + appt[7])
 
 def ViewProviderAppt():
     print("View provider appointments")
@@ -300,7 +336,14 @@ def ViewProviderAppt():
     print("Enter date (yyyy-mm-dd) (optional)")
     date = input()
     out = eget.ViewProviderAppt(cursor, employee_num, date)
-    #TODO implement printing out
+    if (out is None or not len(out)):
+        print("No provider appointments")
+        return
+    print("\nAppointment Number".ljust(24) + "Patient First".ljust(19) + "Last".ljust(15) + "Patient Number".ljust(25) + 
+          "Date".ljust(25) + "Duration".ljust(15) + "Purpose")
+    for appt in out:
+        print(str(appt[0]).ljust(23) + appt[1].ljust(19) + appt[2].ljust(15) + appt[3].ljust(25) + 
+              str(appt[4]).ljust(25) + str(appt[5]).ljust(15) + appt[6])
 
 def ViewDeptAppt():
     print("View department appointments")
@@ -310,8 +353,15 @@ def ViewDeptAppt():
     start = input()
     print("Enter end date (yyyy-mm-dd) (optional)")
     end = input()
-    out = eget.ViewDeptAppt(cursor, dept, start, end)
-    #TODO implement printing out
+    out = eget.ViewDepartmentAppt(cursor, dept, start, end)
+    if (out is None or not len(out)):
+        print("No appointments for this departmnet")
+        return
+    print("\nAppointment Number".ljust(24) + "Patient First".ljust(19) + "Last".ljust(15) + "Patient Number".ljust(25) +
+          "Date".ljust(25) + "Duration".ljust(15) + "Purpose")
+    for appt in out:
+        print(str(appt[0]).ljust(23) + appt[1].ljust(19) + appt[2].ljust(15) + appt[3].ljust(25) +
+              str(appt[4]).ljust(25) + str(appt[5]).ljust(15) + appt[6])
 
 def ScheduleAppointment():
     print("Schedule appointment")
@@ -325,75 +375,56 @@ def ScheduleAppointment():
     purpose = input()
     print("Enter patient num (optional)")
     pt_num = input()
-    out = pcreate.ScheduleAppointment(cursor, employee_num, date + " " + time, purpose, pt_num)
-    #TODO implement printing out
+    out = pcreate.ScheduleAppointment(cursor, conn, employee_num, date + " " + time, purpose, pt_num)
+    if (out is None or not len(out)):
+        print("No appointments for this departmnet")
+        return
+    print(out)
 
-#TODO Should we remove optional date parameter from this since we also have EditAppointmentDate?
 def EditAppointment():
     print("Edit appointment")
     print("Enter appointment number")
     appt = input()
-    print("Enter new date and time in 24 hour format (yyyy-mm-dd hh:mm) (optional)")
-    date = input()
-    print("Enter new duration in minutes (optional)")
-    duration = input()
     print("Enter new purpose (optional)")
     purpose = input()
+    print("Enter new duration in minutes (optional)")
+    duration = input()
+    if len(duration):
+        duration += "m"
+    print("Enter new patient number (optional)")
+    patientNum = input()
     print("Enter employee number to add to appointment (optional)")
-    employee_num = input()
-    out = pupdate.EditAppointment(cursor, appt, date, duration, purpose, employee_num)
-    #TODO implement printing out
+    employeeNum = input()
+    out = eupdate.EditAppointment(cursor, conn, appt, purpose, duration, patientNum, employeeNum)
+    print(out)
 
 def EditAppointmentDate():
     print("Edit appointment date")
     print("Enter appointment number")
     appt = input()
-    print("Enter new date and time in 24 hour format (yyyy-mm-dd hh:mm) (optional)")
+    print("Enter new date and time in 24 hour format (yyyy-mm-dd hh:mm)")
     date = input()
-    out = pupdate.EditAppointmentDate(cursor, appt, date)
-    #TODO implement printing out
+    out = pupdate.EditAppointmentDate(cursor, conn, appt, date)
+    print(out)
 
-#TODO Why is this function accessible by patient, should it only be accessible by employee?
 def RemoveProviderFromAppointment():
     print("Remove provider from appointment")
     print("Enter employee number")
     employee_num = input()
     print("Enter appointment number")
     appt = input()
-    out = pupdate.RemoveProviderFromAppointment(cursor, employee_num, appt)
-    #TODO implement printing out
+    out = eupdate.RemoveProviderFromAppointment(cursor, conn, employee_num, appt)
+    print(out)
 
 def CancelAppointment():
     print("Cancel appointment")
     print("Enter appointment number")
     appt = input()
-    out = pupdate.CancelAppointment(cursor, appt)
-    #TODO implement printing out
-
-def ViewEmployeesAvailable():
-    print("View employees available")
-    print("Enter department abbreviation")
-    dept = input()
-    print("Enter date (yyyy-mm-dd)")
-    date = input()
-    out = eget.ViewEmployeesAvailable(cursor, dept, date)
-    #TODO implement printing out
-
-def ViewEmployeeAvailability():
-    print("View employees availability")
-    print("Enter employee number")
-    employee_num = input()
-    print("Enter date (yyyy-mm-dd)")
-    date = input()
-    out = pget.ViewEmployeeAvailability(cursor, employee_num, date)
-    #TODO implement printing out
-
-def CancelAppointment():
-    print("Cancel appointment")
-    print("Enter appointment number")
-    appt = input()
-    pupdate.CancelAppointment(cursor, appt)
-    #TODO implement printing out
+    out = pupdate.CancelAppointment(cursor, conn, appt)
+    if not len(out):
+        print("Appointment is within 24 hours and cannot be cancelled")
+        return
+    print(out)
 
 def display_cmds():
     print("--- Providers ---\n"
@@ -407,33 +438,32 @@ def display_cmds():
         + "8: List all departments")
     print("--- Schedule ---\n"
         + "9: Create shift\n"
-        + "10: Cancel shift")
+        + "10: Cancel shift\n"
+        + "11: View shifts")
     print("--- Patients ---\n"
-        + "11: Find patient\n" 
-        + "12: View patient info\n"
-        + "13: Create patient\n"
-        + "14: Edit patient\n"
-        + "15: Add address\n"
-        + "16: Remove address")
+        + "12: Find patient\n" 
+        + "13: View patient info\n"
+        + "14: Create patient\n"
+        + "15: Edit patient\n"
+        + "16: Add address\n"
+        + "17: Remove address")
     print("--- Records ---\n"
-        + "17: Create medical record\n"
-        + "18: View medical records by patient")
+        + "18: Create medical record\n"
+        + "19: View medical records by patient")
     print("--- Prescriptions ---\n"
-        + "19: Create prescription\n"
-        + "20: Cancel prescription\n"
-        + "21: View current prescriptions\n"
-        + "22: View all prescriptions")
+        + "20: Create prescription\n"
+        + "21: Cancel prescription\n"
+        + "22: View current prescriptions\n"
+        + "23: View all prescriptions")
     print("--- Appointments ---\n"
-        + "23: View future appointments for patient\n"
-        + "24: View provider appointments\n"
-        + "25: View department appointments\n"
-        + "26: Schedule appointment\n"
-        + "27: Edit appointment\n"
-        + "28: Edit appointment date\n"
-        + "29: Remove provider from appointment\n"
-        + "30: View employees available\n"
-        + "31: View employees availability\n"
-        + "32: Cancel appointment")
+        + "24: View future appointments for patient\n"
+        + "25: View provider appointments\n"
+        + "26: View department appointments\n"
+        + "27: Schedule appointment\n"
+        + "28: Edit appointment\n"
+        + "29: Edit appointment date\n"
+        + "30: Remove provider from appointment\n"
+        + "31: Cancel appointment")
     print("Type exit to terminate program")
     
 def get_input():
@@ -467,48 +497,46 @@ def get_input():
         case 10:
             CancelShift()
         case 11:
-            FindPatient()
+            ViewShifts()
         case 12:
-            ViewPatientInfo()
+            FindPatient()
         case 13:
-            CreatePatient()
+            ViewPatientInfo()
         case 14:
+            CreatePatient()
+        case 15:
             EditPatient()
-        case 15: 
+        case 16: 
             AddAddress()
-        case 16:
-            removeAddress()
         case 17:
-            CreateMedicalRecord()
+            removeAddress()
         case 18:
+            CreateMedicalRecord()
+        case 19:
             ViewMedicalRecordsByPatient()
-        case 19: 
-            CreatePrescription()
         case 20: 
-            CancelPrescription()
+            CreatePrescription()
         case 21: 
-            ViewCurrentPrescriptions()
+            CancelPrescription()
         case 22: 
+            ViewCurrentPrescriptions()
+        case 23: 
             ViewAllPrescriptions()
-        case 23:
+        case 24:
             ViewFutureAppointments()
-        case 24: 
-            ViewProviderAppt()
         case 25: 
-            ViewDeptAppt()
+            ViewProviderAppt()
         case 26: 
+            ViewDeptAppt()
+        case 27: 
             ScheduleAppointment()
-        case 27:
+        case 28:
             EditAppointment()
-        case 28: 
-            EditAppointmentDate()
         case 29: 
+            EditAppointmentDate()
+        case 30: 
             RemoveProviderFromAppointment()
-        case 30:
-            ViewEmployeesAvailable()
         case 31:
-            ViewEmployeeAvailability()
-        case 32:
             CancelAppointment()
     print("Press enter to continue")
     input()

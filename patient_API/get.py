@@ -47,7 +47,6 @@ def ViewEmployeeAvailability(cursor, employeeNum, date):
     """
     
 
-# TODO: needs to be tested
 def ViewCurrentPrescriptions(cursor, patientNum):
     """
     Description:
@@ -69,34 +68,18 @@ def ViewCurrentPrescriptions(cursor, patientNum):
             JOIN appointment a ON (a.id = mr.appointmentid) 
             JOIN patient p ON (p.id = a.patientid)
             JOIN medication m ON (m.abbreviation = pr.medicationAbbreviation)
-        WHERE p.patientNum = %s AND pr.enddate > CURRENT_DATE
+        WHERE p.patientNum ILIKE %s AND pr.enddate > CURRENT_DATE
         ORDER BY pr.enddate DESC;
         """
         cursor.execute(query, (patientNum,))
-        prescriptions = cursor.fetchall()
-        
-        if len(prescriptions) == 0:
-            print("Patient does not have any ongoing prescriptions")
-            return prescriptions
-        
-        # Format records for better readability
-        formatted_prescriptions = []
-        for prescription in prescriptions:
-            name, milligrams, frequency, endDate = prescription
-            # Convert frequency to a total number of hours (if stored as seconds)
-            hours = frequency.total_seconds() / 3600
-            formatted_prescription = (name, milligrams, f"{hours} hours", endDate.strftime("%Y-%m-%d"))
-            formatted_prescriptions.append(formatted_prescription)
-        
-        return formatted_prescriptions
+        return cursor.fetchall()
         
     except Exception as e:
-        print(f"Error retrieving medical records: {e}")
-        return []
+        print(f"Error retrieving Current Prescriptions: {e}")
+        return None
 
     
-# TODO: Needs to be tested
-def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = None, endDate = None):
+def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = "", endDate = ""):
     """
     Description:
     Given a patient Number and optional start and end dates, return all medical records for that patient. 
@@ -111,73 +94,24 @@ def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = None, endDate = 
     Returns:
     {MedicationRecordNum, AppointmentNum, Date, RecordText}
     """
-    
+    query = """
+    SELECT mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+    FROM medicalrecord mr 
+        JOIN appointment a ON mr.appointmentid  = a.id
+        JOIN patient p ON p.id = a.patientid
+    WHERE p.patientnum ILIKE %s AND mr.date >= %s AND mr.date <= %s
+    ORDER BY mr.date DESC;
+    """
+    if not len(startDate):
+        startDate = "1900-01-01"
+    if not len(endDate):
+        endDate = "3000-12-31"
     try:
-        # if startDate == None and endDate == None
-        if not startDate and not endDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum,))
-        # if startDate == None and endDate != None
-        if not startDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date <= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, endDate))
-        # if startDate != None and endDate == None
-        if not endDate:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date >= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, startDate))
-        
-        # if startDate != None and endDate != None
-        else:
-            query = """
-            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-            FROM medicalrecord mr 
-                JOIN appointment a ON mr.appointmentid  = a.id
-                JOIN patient p ON p.id = a.patientid
-            WHERE p.patientnum = %s AND mr.date >= %s and mr.date <= %s
-            ORDER BY mr.date DESC;
-            """
-            cursor.execute(query, (patientNum, startDate, endDate))
-            
-        records = cursor.fetchall()
-        if len(records) == 0:
-            print("Patient does not have any medical records with the given parameters")
-        # Format the records for better readability, specifically the Date field
-        formatted_records = []
-        for record in records:
-            # Extract the date and format it
-            date = record[3]
-            formatted_date = date.strftime('%Y-%m-%d') if date else 'N/A'
-            
-            # Replace the original date with the formatted one in the record
-            formatted_record = record[:3] + (formatted_date,) + record[4:]
-            formatted_records.append(formatted_record)
-        
-        return formatted_records
-
+        cursor.execute(query, (patientNum, startDate, endDate))
+        return cursor.fetchall()
     except Exception as e:
         print(f"Error retrieving medical records: {e}")
-        return []
+        return None
 
 def ViewFutureAppt(cursor, patientNum):
     """
@@ -191,6 +125,23 @@ def ViewFutureAppt(cursor, patientNum):
     Returns:
     {AppointmentNum, Building, Room, Date, Time, Duration, Purpose, ProviderName}
     """
+    query = """
+    SELECT a.AppointmentNum, cio.Building, cio.RoomNumber, a.Date, a.Duration, a.Purpose, hc.FirstName, hc.LastName
+    FROM Patient p
+        JOIN Appointment a ON (p.ID = a.PatientID)
+        JOIN AppointmentProviders ap ON (a.ID = ap.AppointmentID)
+        JOIN HealthCareProvider hc ON (ap.HealthCareProviderID = hc.ID)
+        JOIN Department d ON (hc.DepartmentAbbreviation = d.Abbreviation)
+        JOIN CheckInOffice cio ON (d.CheckInOfficeID = cio.ID)
+    WHERE p.patientNum ILIKE %s;
+    """
+    try:
+        cursor.execute(query, (patientNum,))
+        return cursor.fetchall()
+    
+    except Exception as e:
+        print(f"Error retrieving patient info: {e}")
+        return None
 
 def ViewPatientInfo(cursor, patientNum):
     """

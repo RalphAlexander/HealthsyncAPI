@@ -187,7 +187,6 @@ def CancelShift(cursor, connection, employeeNum, shiftStart):
         # Rollback in case of any error
         connection.rollback()
         return "Failed"
-    
 
 def CancelPrescription(cursor, connection, patientNum, medicationAbbreviation):
     """
@@ -206,3 +205,130 @@ def CancelPrescription(cursor, connection, patientNum, medicationAbbreviation):
     Returns:
     {isSuccessful}
     """
+    checkPresc = """
+    SELECT medicalrecord.id 
+    FROM medicalrecord
+        JOIN appointment ON appointmentid = appointment.id
+        JOIN patient ON patientid = patient.id
+        JOIN prescription ON medicalrecord.id = medicalrecordid
+    WHERE patientnum ILIKE %s AND medicationabbreviation ILIKE %s AND endDate > CURRENT_DATE
+    """
+    query = """
+    UPDATE prescription
+    SET enddate = CURRENT_DATE
+    WHERE id IN (
+        SELECT prescription.id
+        FROM medicalrecord
+            JOIN appointment ON appointmentid = appointment.id
+            JOIN patient ON patientid = patient.id
+            JOIN prescription ON medicalrecord.id = medicalrecordid
+        WHERE patientnum ILIKE %s AND medicationabbreviation ILIKE %s AND endDate > CURRENT_DATE)
+    """
+    try:
+        cursor.execute(checkPresc, (patientNum, medicationAbbreviation))
+        if not len(cursor.fetchall()):
+            raise Exception("Prescription not found")
+        cursor.execute(query, (patientNum, medicationAbbreviation))
+        connection.commit()
+        return "Succesful"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return "Failed"
+
+
+def EditAppointment(cursor, connection, appointmentNum, newPurpose = "", newDuration = "", patientNum = "", employeeNum = ""):
+    """
+    Description: 
+    Given an appointment number, and the information to change on the appointment, it updates
+    the appointment with the new information. Returns successful if appointment updated, returns
+    unsuccessful if appointment not found.
+
+    Parameters:
+    cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
+    appointmentNum (string)     : The unique identifier for an appointment.
+    newDate (string)            : The new date to set the appointment to in any accepted date format to set to.
+    newDuration (int)           : The new duration of the appointment in minutes to set to.
+    newPurpose (string)         : The new purpose of the appointment to set to.
+    employeeNum (string)        : The unique identifier for an employee.
+
+    Returns:
+    boolean: Returns true if the appointment edit is successful or not
+    """
+    
+    updatePurpose = """
+    UPDATE appointment
+    SET purpose = %s
+    WHERE appointmentNum = %s
+    """
+    updatePatientNum = """
+    UPDATE appointment
+    SET patientid = (SELECT id FROM patient WHERE patientnum ILIKE %s)
+    WHERE appointmentnum = %s
+    """
+    updateDuration = """
+    UPDATE appointment
+    SET duration = %s
+    WHERE appointmentNum = %s
+    """
+    addProvider = """
+    INSERT INTO appointmentProviders (HealthcareProviderID, appointmentid) VALUES
+    ((SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s AND currentlyEmployed), (SELECT id FROM appointment WHERE appointmentnum = %s))
+    """
+    try:
+        if len(newPurpose):
+            cursor.execute(updatePurpose, (newPurpose, appointmentNum))
+        if len(newDuration):
+            cursor.execute(updateDuration, (newDuration, appointmentNum))
+        if len(patientNum):
+            cursor.execute(updatePatientNum, (patientNum, appointmentNum))
+        if len(addProvider):
+            cursor.execute(addProvider, (employeeNum, appointmentNum))
+        connection.commit()
+        return "Succesful"
+    except Exception as e:
+        # In case of any exception, print the error and rollback the transaction.
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return "Failed"
+
+def RemoveProviderFromAppointment(cursor, connection, employeeNum, appointmentNum):
+    """
+    Given an appointment number and employee number, removes the provider from a scheduled appointment.
+    Returns successful if removed, returns unsuccessful if provider was not scheduled for that appointment. 
+
+    Parameters:
+    cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    connection (psycopg2)       : A connection object associated with the database session. This object is used to commit or roll
+                                  back the transaction.
+    appointmentNum (string)     : The unique identifier for an appointment.
+    employeeNum (string)        : The unique identifier for an employee.
+
+    Returns:
+    boolean: Returns true if the provider is successfully removed from the appointment
+    """
+    query = """
+    SELECT COUNT(*) FROM appointmentproviders
+    WHERE AppointmentID = (SELECT id FROM appointment WHERE appointmentNum = %s)
+    """
+    deleteAppointmentProvider = """
+    DELETE FROM AppointmentProviders
+    WHERE HealthCareProviderID = (SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s) AND AppointmentID = (SELECT id FROM appointment WHERE appointmentNum = %s)
+    """
+    try:
+        cursor.execute(query, (appointmentNum,))
+        totalProviders = cursor.fetchone()[0]
+        if totalProviders == 0:
+            raise Exception("Appointment and provider combination not found")
+        if totalProviders == 1:
+            raise Exception("Appointment must have atleast one provider")
+        cursor.execute(deleteAppointmentProvider, (employeeNum, appointmentNum))
+        connection.commit()
+        return "Succesful"
+    except Exception as e:
+        # In case of any exception, print the error and rollback the transaction.
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return "Failed"

@@ -67,7 +67,7 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
     purpose (string)        : The purpose of the appointment.
     patientNum (string)     : The unique identifier for a patient.
 
-    Returns:
+    Returns:6
     bool
     """
 
@@ -78,7 +78,16 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
         JOIN Appointment a ON a.id = ap.AppointmentId
     WHERE hcp.EmployeeNum ILIKE %s AND a.date = %s;
     """
-    
+
+    getEmployeeSchedule = """
+    SELECT hc.FirstName, hc.LastName, hc.EmployeeNum, ps.shiftstart, ps.duration
+    FROM ProviderShifts ps
+        JOIN HealthCareProvider hc ON (ps.HealthCareProviderID = hc.ID)
+    WHERE hc.EmployeeNum ILIKE %s 
+        AND ps.shiftstart <= %s 
+        AND (ps.shiftstart + ps.duration) >= %s;
+    """
+
     getPatientId = """
     SELECT ID FROM Patient
     WHERE PatientNum ILIKE %s;
@@ -102,28 +111,30 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
     
     try:
         # Check if the provider is available
-        cursor.execute(getEmployeeAvailability, (employeeNum, dateTime,))
+        cursor.execute(getEmployeeAvailability, (employeeNum, dateTime))
         if cursor.fetchone():
-            print("Provider is unavailable at the given time.")
-            return False
+            raise Exception("Provider is unavailable at the given time.")
         patientId = None
         
+
+        # Check if the provider is working at that time
+        cursor.execute(getEmployeeSchedule, (employeeNum, dateTime, dateTime))
+        if not cursor.fetchone():
+            raise Exception("Provider is unavailable at the given time.")
+
         # If a patientNum is provided, check if the patient exists
         if patientNum:
             cursor.execute(getPatientId, (patientNum,))
             patientResult = cursor.fetchone()
             if not patientResult:
-                print("PatientNum not found.")
-                return False
+                raise Exception("PatientNum not found.")
             patientId = patientResult[0]
-        
         
         # Check if the employee exists
         cursor.execute(getEmployeeId, (employeeNum,))
         employeeResult = cursor.fetchone()
         if not employeeResult:
-            print("EmployeeNum not found.")
-            return False
+            raise Exception("EmployeeNum not found.")
         employeeId = employeeResult[0]
         
         # Insert the new appointment, handling null patientNum
@@ -132,19 +143,17 @@ def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, pati
         cursor.execute(insertAppointment, (patientId, dateTime, purpose, appointmentNum, duration))
         insertAppointmentResult = cursor.fetchone()
         if not insertAppointmentResult:
-            print("Error inserting appointment.")
-            return False
+            raise Exception("Problems inserting appointment.")
         appointmentId = insertAppointmentResult[0]
         # Insert into AppointmentProviders
-        cursor.execute(insertAppointmentProvider, (employeeId, appointmentId,))
+        cursor.execute(insertAppointmentProvider, (employeeId, appointmentId))
 
         # Commit the transaction
         connection.commit()
-        print("Appointment successfully scheduled.")
-        
-        return True;
+        return "Succesful"
+
     except Exception as e:
         print(f"An error occurred: {e}")
         # Rollback in case of any error
         connection.rollback()
-        return False
+        return "Failed"

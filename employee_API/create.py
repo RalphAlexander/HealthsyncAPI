@@ -1,6 +1,4 @@
-import string
-import random
-
+from patient_API.patUtil import *
 
 
 def CreateHealthCareProvider(cursor, conn, employeeNum, firstName, lastName, titleAbbreviation, departmentAbbreviation, specialtyAbbreviation):
@@ -125,21 +123,6 @@ def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, email 
         connection.rollback()
         return "Failed"
 
-#returns a uniqe patient num
-def createPatientNum(cursor):
-    characters = string.ascii_letters + string.digits
-    generated_string = ""
-    for i in range(10):
-        generated_string += (random.choice(characters))
-
-    query = """
-    SELECT * FROM patient WHERE patientNum ILIKE %s
-    """
-    cursor.execute(query, (generated_string,))
-    if not cursor.fetchone():
-        return generated_string
-    return createPatientNum(cursor)
-
 def CreateMedicalRecord(cursor, connection, appointmentNum, recordText):
     """
     Description: 
@@ -155,6 +138,19 @@ def CreateMedicalRecord(cursor, connection, appointmentNum, recordText):
     Returns:
     boolean: Returns true if medical record successfully created
     """
+    query = """
+    INSERT INTO medicalrecord (appointmentid, medicalrecordnum, date, record) VALUES
+    ((SELECT id FROM appointment WHERE appointmentnum = %s), %s, CURRENT_TIMESTAMP, %s)
+    """
+    try:
+        cursor.execute(query, (appointmentNum, createRecordNum(cursor), recordText))
+        connection.commit()
+        return "Success"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Rollback in case of any error
+        connection.rollback()
+        return "Failed"
 
 def CreatePrescription(cursor, connection, medicalRecordNum, medicationAbbreviation, doseInMilligrams, frequency, endDate):
     """
@@ -174,3 +170,16 @@ def CreatePrescription(cursor, connection, medicalRecordNum, medicationAbbreviat
     Returns:
     boolean: Returns true if prescription successfully created
     """
+    query = """
+    INSERT INTO prescription (medicalrecordid, medicationabbreviation, milligrams, frequency, endDate) VALUES
+    ((SELECT id from medicalrecord WHERE medicalrecordnum = %s), %s, %s, %s, %s)
+    """
+    try: 
+        cursor.execute(query, (medicalRecordNum, medicationAbbreviation.upper(), doseInMilligrams, frequency, endDate))
+        connection.commit()
+        return "Success"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Rollback in case of any error
+        connection.rollback()
+        return "Failed"
