@@ -22,3 +22,5 @@ DB_USER=postgres
 DB_PASSWORD=your_db_password
 ```
 5. Run the program using the command line
+To run employee API: python employee_api.py
+To run patient API: python patient_api.py
