@@ -1,6 +1,6 @@
 from util import GenerateAppointmentNum
 
-def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1, address2 = None, postalCode = None):
+def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1, address2 = "", postalCode = ""):
     """
     Description: 
     Given a patient number and address, adds the address to the patient's file.
@@ -19,40 +19,36 @@ def AddAddress(cursor, connection, patientNum, city, stateAbbreviation, address1
     Returns:
     bool
     """
-    
+    findAddress = """
+    SELECT id
+    FROM address
+    WHERE address1 ILIKE %s AND address2 ILIKE %s AND postalcode ILIKE %s AND city ILIKE %s AND stateAbbreviation ILIKE %s
+    """
+    insertAddress = """
+    INSERT INTO Address (Address1, Address2, postalCode, city, stateabbreviation) 
+    VALUES (%s, %s, %s, %s, %s)
+    RETURNING ID;
+    """
+    insertPatientAddress = """
+    INSERT INTO PatientAddresses (PatientID, AddressID) VALUES 
+    ((SELECT id FROM Patient WHERE patientNum ILIKE %s), %s);
+    """
     try:
-        insertAddress = """
-        INSERT INTO Address (City, StateAbbreviation, Address1, Address2, PostalCode) 
-        VALUES (%s, %s, %s, %s, %s)
-        RETURNING ID;
-        """
-        getPatientQuery = """
-        SELECT id FROM Patient
-        WHERE patientNum ILIKE %s;
-        """
-        insertPatient = """
-        INSERT INTO PatientAddresses (PatientID, AddressID)
-        VALUES (%s, %s);
-        """
-        cursor.execute(getPatientQuery, (patientNum, ))
-        patientResult = cursor.fetchone()
-        if not patientResult:
-            print("Patient number not found.")
-            return False
-        patientId = patientResult[0]
-        
-        
-        cursor.execute(insertAddress, (city, stateAbbreviation, address1, address2, postalCode,))
-        addressId = cursor.fetchone()[0]
-        
-        cursor.execute(insertPatient, (patientId, addressId,))
+        cursor.execute(findAddress, (address1, address2, postalCode, city, stateAbbreviation))
+        result = cursor.fetchone()
+        #address does not exist
+        if not result:
+            cursor.execute(insertAddress, (address1, address2, postalCode, city, stateAbbreviation))
+            result = cursor.fetchone()[0]
+        else:
+            result = result[0]
+        cursor.execute(insertPatientAddress, (patientNum, result))
         connection.commit()
-        
-        return True
+        return "Succesful"
     except Exception as e:
             print(f"An error occurred: {e}")
             connection.rollback()
-            return False
+            return "Failed"
 
 def ScheduleAppointment(cursor, connection, employeeNum, dateTime, purpose, patientNum = None):
     """

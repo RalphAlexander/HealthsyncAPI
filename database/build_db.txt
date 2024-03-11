@@ -68,7 +68,7 @@ CREATE TABLE ProviderShifts (
 	ID			SERIAL not null,
 	HealthCareProviderID	INTEGER not null,
 	ShiftStart		TIMESTAMP not null,
-	ShiftEnd		TIMESTAMP not null,
+	duration		INTERVAL not null,
 
 	PRIMARY KEY		(ID),
 	FOREIGN KEY		(HealthCareProviderID) references HealthCareProvider(ID)

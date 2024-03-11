@@ -13,17 +13,26 @@ import patient_API.update as pupdate
 #--- provider functions ---
 def ViewProvider():
     print("View Provider")
+    print("Enter a first name")
+    fname = input()
+    print("Enter a last name")
+    lname = input()
     print("Enter a department abbreviation to filter by (optional)")
     dept = input()
-    print("Enter a specialty abbreviation to filter by (optional)")
-    specialty = input()
     print("Enter a provider title to filter by (optional)")
     title = input()
-    out = pget.ViewProvider(cursor, dept, specialty, title)
-    #TODO implement printing out
+    out = pget.ViewProvider(cursor, fname, lname, dept, title)
+    if(not out):
+        print("No results")
+        return
+    print("Number".ljust(8) + "First Name".ljust(16) + "Last name".ljust(16) + "Title".ljust(8) + "Department".ljust(21) + "Specialty")
+    for provider in out:
+        print(provider[0].ljust(7), provider[1].ljust(15), provider[2].ljust(15), provider[3].ljust(7), provider[4].ljust(20), provider[5])
 
 def CreateHealthCareProvider():
     print("Create Healthcare Provider")
+    print("Enter employee number")
+    employee_num = input()
     print("Enter a first name")
     fname = input()
     print("Enter a last name")
@@ -34,8 +43,8 @@ def CreateHealthCareProvider():
     dept = input()
     print("Enter a specialty")
     special = input()
-    out = ecreate.CreateHealthCareProvider(cursor, fname, lname, title, dept, special)
-    #TODO implement printing out
+    out = ecreate.CreateHealthCareProvider(cursor, conn, employee_num, fname, lname, title, dept, special)
+    print(out)
 
 def EditHealthcareProvider():
     print("Edit Healthcare provider")
@@ -49,8 +58,8 @@ def EditHealthcareProvider():
     lname = input()
     print("Enter new department abbreviation (optional)")
     dept = input()
-    out = eupdate.EditHealthcareProvider(cursor, employee_num, title, fname, lname, dept)
-     #TODO implement printing out
+    out = eupdate.EditHealthCareProvider(cursor, conn, employee_num, title, fname, lname, dept)
+    print(out)
 
 def EditSpecialty():
     print("Edit specialty")
@@ -58,69 +67,69 @@ def EditSpecialty():
     employee_num = input()
     print("Enter specialty")
     specialty = input()
-    out = eupdate.EditSpecialty(cursor, employee_num, specialty)
-    #TODO implement printing out
-
-def FindEmployee():
-    print("Find employee")
-    print("Enter first name")
-    fname = input()
-    print("Enter last name")
-    lname = input()
-    print("Enter title abbreviation (optional)")
-    title = input()
-    out = pget.FindEmployee(cursor, fname, lname, title)
-    #TODO implement printing out
+    out = eupdate.EditSpecialty(cursor, conn, employee_num, specialty)
+    print(out)
 
 def ChangeEmploymentStatus():
     print("Change employment status")
     print("Enter employee number")
     employee_num = input()
-    out = eupdate.ChangeEmploymentStatus(cursor, employee_num)
-    #TODO implement printing out
+    out = eupdate.ChangeEmploymentStatus(cursor, conn, employee_num)
+    print(out)
 
 def ListAllSpecialties():
     print("List all specialties")
     out = pget.ListAllSpecialties(cursor)
-    #TODO implement printing out
+    if not out:
+        return
+    print("Abbreviation".ljust(14) + "Specialty")
+    for specialty in out:
+        print(specialty[0].ljust(14) + specialty[1])
 
 def ListAllTitles():
     print("List all titles")
     out = pget.ListAllTitles(cursor)
-    #TODO implement printing out
+    if not out:
+        return
+    print("Abbreviation".ljust(14) + "Specialty")
+    for title in out:
+        print(title[0].ljust(14) + title[1])
 
 def ListAllDepartments():
     print("List all departments")
     out = pget.ListAllDepartments(cursor)
-    #TODO implement printing out
+    if not out:
+        return
+    print("Abbreviation".ljust(14) + "Specialty")
+    for dept in out:
+        print(dept[0].ljust(14) + dept[1])
 
 #--- schedule functions ---
 def CreateShift():
     print("Create shift")
     print("Enter employee number")
     employee_num = input()
-    print("Enter shift start date (yyyy-mm-dd)")
-    date = input()
-    print("Enter shift start time in 24 hour format (hh:mm)")
-    time = input()
-    print("Enter shift end date (yyyy-mm-dd)")
-    edate = input()
-    print("Enter shift end time in 24 hour format (hh:mm)")
-    etime = input()
-    out = eupdate.CreateShift(cursor, employee_num, date + " " + time, edate + " " + etime)
-    #TODO implement printing out
+    print("Enter shift start date and time (yyyy-mm-dd hh:mm)")
+    date = input() + ":00"
+    print("Enter shift length (hh mm)")
+    duration = input()
+    if(len(duration.split()) == 1):
+        duration = duration.split()[0] +"h"
+    else:
+        duration = duration.split()[0]+ "h " + duration.split()[1] + "m" 
+    out = ecreate.CreateShift(cursor, conn, employee_num, date, duration)
+    print(out)
 
 def CancelShift():
     print("Cancel shift")
     print("Enter employee number")
     employee_num = input()
-    print("Enter shift start date (yyyy-mm-dd)")
-    date = input()
-    print("Enter shift start time in 24 hour format (hh:mm)")
-    time = input()
-    out = eupdate.CancelShift(cursor, employee_num, date + " " + time)
-    #TODO implement printing out
+    print("Enter shift start date and time (yyyy-mm-dd hh:mm)")
+    date = input() + ":00"
+    out = eupdate.CancelShift(cursor, conn, employee_num, date)
+    print(out)
 
+#--- Patient functions ---
 def FindPatient():
     print("Find patient")
     print("Enter first name")
@@ -129,15 +138,27 @@ def FindPatient():
     lname = input()
     print("Enter birthday (yyyy-mm-dd)")
     bday = input()
-    out = eget.FindPatient(cursor, fname, last_name, bday)
-    #TODO implement printing out
+    out = eget.FindPatient(cursor, fname, lname, bday)
+    if not out:
+        print("No patients found")
+        return
+    print("First".ljust(15) + "Last".ljust(15) + "Patient Num".ljust(15) + "Birthday".ljust(15) + "Address")
+    for pt in out:
+        print(pt[0].ljust(15) + pt[1].ljust(15) +pt[2].ljust(15) + str(pt[3]).ljust(15) + pt[4] + " " + pt[5] + " " + pt[6])
 
 def ViewPatientInfo():
     print("View patient info")
     print("Enter patient number")
     pt_num = input()
-    out = eget.ViewPatientInfo(cursor, pt_num)
-    #TODO implement printing out
+    out = pget.ViewPatientInfo(cursor, pt_num)
+    if not out:
+        print("Patient not found")
+        return
+    print("First".ljust(15) + "Last".ljust(15) + "Email".ljust(20) + "Phone".ljust(15) 
+            + "Sex".ljust(6) + "Birthday".ljust(15) + "Address")
+    for pt in out:
+        print(pt[0].ljust(15) + pt[1].ljust(15) +pt[2].ljust(20) + pt[3].ljust(15) + pt[4].ljust(6) 
+            + str(pt[5]).ljust(15) + pt[6] + " " + pt[7] + " " + pt[8] + " " + pt[9] + " " + pt[10])
 
 def CreatePatient():
     print("Create patient")
@@ -153,18 +174,8 @@ def CreatePatient():
     sex = input()
     print("Enter birthday (yyyy-mm-dd)")
     bday = input()
-    print("Enter street address")
-    street = input()
-    print("Enter unit number (optional)")
-    street2 = input()
-    print("Enter postal code (optional)")
-    post = input()
-    print("Enter city")
-    city = input()
-    print("Enter state abbreviation (CO, NY, WA, etc.)")
-    state = input()
-    out = ecreate.CreatePatient(cursor, fname, lname, email, phone, sex, bday, street, street2, post, city, state)
-    #TODO implement printing out
+    out = ecreate.CreatePatient(cursor, conn, fname, lname, sex, bday, email, phone)
+    print("\n" + out)
 
 def EditPatient():
     print("Edit patient")
@@ -178,8 +189,8 @@ def EditPatient():
     email = input()
     print("Enter new phone number (digits only. i.e. 1234567890) (optional)")
     phone = input()
-    out = pupdate.EditPatient(cursor, pt_num, fname, lname, email, phone)
-    #TODO implement printing out
+    out = pupdate.EditPatient(cursor, conn, pt_num, fname, lname, email, phone)
+    print(out)
 
 def AddAddress():
     print("Add address")
@@ -195,8 +206,8 @@ def AddAddress():
     city = input()
     print("Enter state abbreviation (CO, NY, WA, etc.)")
     state = input()
-    out = pupdate.AddAddress(cursor, pt_num, street, street2, post, city, state)
-    #TODO implement printing out
+    out = pcreate.AddAddress(cursor, conn, pt_num, city, state, street, street2, post)
+    print(out)
     
 def removeAddress():
     print("Remove address")
@@ -390,40 +401,39 @@ def display_cmds():
         + "2: Create HealthCare Provider\n"
         + "3: Edit HealthCare Provider\n"
         + "4: Edit specialty\n"
-        + "5: Find employee\n"
-        + "6: Change Employment status\n"
-        + "7: List all specialties\n"
-        + "8: List all titles\n"
-        + "9: List all departments")
+        + "5: Change Employment status\n"
+        + "6: List all specialties\n"
+        + "7: List all titles\n"
+        + "8: List all departments")
     print("--- Schedule ---\n"
-        + "10: Create shift\n"
-        + "11: Cancel shift")
+        + "9: Create shift\n"
+        + "10: Cancel shift")
     print("--- Patients ---\n"
-        + "12: Find patient\n" 
-        + "13: View patient info\n"
-        + "14: Create patient\n"
-        + "15: Edit patient\n"
-        + "16: Add address\n"
-        + "17: Remove address")
+        + "11: Find patient\n" 
+        + "12: View patient info\n"
+        + "13: Create patient\n"
+        + "14: Edit patient\n"
+        + "15: Add address\n"
+        + "16: Remove address")
     print("--- Records ---\n"
-        + "18: Create medical record\n"
-        + "19: View medical records by patient")
+        + "17: Create medical record\n"
+        + "18: View medical records by patient")
     print("--- Prescriptions ---\n"
-        + "20: Create prescription\n"
-        + "21: Cancel prescription\n"
-        + "22: View current prescriptions\n"
-        + "23: View all prescriptions")
+        + "19: Create prescription\n"
+        + "20: Cancel prescription\n"
+        + "21: View current prescriptions\n"
+        + "22: View all prescriptions")
     print("--- Appointments ---\n"
-        + "24: View future appointments for patient\n"
-        + "25: View provider appointments\n"
-        + "26: View department appointments\n"
-        + "27: Schedule appointment\n"
-        + "28: Edit appointment\n"
-        + "29: Edit appointment date\n"
-        + "30: Remove provider from appointment\n"
-        + "31: View employees available\n"
-        + "32: View employees availability\n"
-        + "33: Cancel appointment")
+        + "23: View future appointments for patient\n"
+        + "24: View provider appointments\n"
+        + "25: View department appointments\n"
+        + "26: Schedule appointment\n"
+        + "27: Edit appointment\n"
+        + "28: Edit appointment date\n"
+        + "29: Remove provider from appointment\n"
+        + "30: View employees available\n"
+        + "31: View employees availability\n"
+        + "32: Cancel appointment")
     print("Type exit to terminate program")
     
 def get_input():
@@ -445,62 +455,60 @@ def get_input():
         case 4:
             EditSpecialty()
         case 5:
-            FindEmployee()
-        case 6: 
             ChangeEmploymentStatus()
-        case 7:
+        case 6:
             ListAllSpecialties()
-        case 8:
+        case 7:
             ListAllTitles()
-        case 9: 
+        case 8: 
             ListAllDepartments()
-        case 10:
+        case 9:
             CreateShift()
-        case 11:
+        case 10:
             CancelShift()
-        case 12:
+        case 11:
             FindPatient()
-        case 13:
+        case 12:
             ViewPatientInfo()
-        case 14:
+        case 13:
             CreatePatient()
-        case 15:
+        case 14:
             EditPatient()
-        case 16: 
+        case 15: 
             AddAddress()
-        case 17:
+        case 16:
             removeAddress()
-        case 18:
+        case 17:
             CreateMedicalRecord()
-        case 19:
+        case 18:
             ViewMedicalRecordsByPatient()
-        case 20: 
+        case 19: 
             CreatePrescription()
-        case 21: 
+        case 20: 
             CancelPrescription()
-        case 22: 
+        case 21: 
             ViewCurrentPrescriptions()
-        case 23: 
+        case 22: 
             ViewAllPrescriptions()
-        case 24:
+        case 23:
             ViewFutureAppointments()
-        case 25: 
+        case 24: 
             ViewProviderAppt()
-        case 26: 
+        case 25: 
             ViewDeptAppt()
-        case 27: 
+        case 26: 
             ScheduleAppointment()
-        case 28:
+        case 27:
             EditAppointment()
-        case 29: 
+        case 28: 
             EditAppointmentDate()
-        case 30: 
+        case 29: 
             RemoveProviderFromAppointment()
-        case 31:
+        case 30:
             ViewEmployeesAvailable()
-        case 32:
+        case 31:
             ViewEmployeeAvailability()
-        case 33:
+        case 32:
             CancelAppointment()
     print("Press enter to continue")
     input()
@@ -520,8 +528,9 @@ def main():
     }
 
     try:
-        conn = psycopg2.connect(**conn_params)
+        global conn
         global cursor
+        conn = psycopg2.connect(**conn_params)
         cursor = conn.cursor()
         while True:
             display_cmds()

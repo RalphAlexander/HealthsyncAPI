@@ -1,4 +1,4 @@
-def EditSpecialty(cursor, connection, employeeNum, specialityName):
+def EditSpecialty(cursor, connection, employeeNum, specialtyAbbreviation):
     """
     Description: 
     Given an employee number and specialty, adds a specialty to an employees file or removes a
@@ -10,13 +10,42 @@ def EditSpecialty(cursor, connection, employeeNum, specialityName):
     connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
                               back the transaction.
     employeeNum (string)    : The unique identifier for an employee.
-    specialtyName (string)  : Name of the new speciality to be changed.
+    specialtyName (string)  : Name of the new specialty to be changed.
 
     Returns:
     {added, removed or unsuccesful}
     """
+    checkSpecialtyExists = """
+    SELECT COUNT(*)
+    FROM providerspecialties 
+    WHERE providerid = (SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s) AND specialtyAbbreviation ILIKE %s
+    """
+    specialtyAbbreviation = specialtyAbbreviation.upper()
+    try:
+        cursor.execute(checkSpecialtyExists, (employeeNum, specialtyAbbreviation))
+        
+        if cursor.fetchone()[0] == 0:
+            update = """
+            INSERT INTO providerSpecialties(providerid, specialtyabbreviation) VALUES
+            ((SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s), %s)
+            """
+            cursor.execute(update, (employeeNum, specialtyAbbreviation))
+            connection.commit()
+            return "Added"
+        else:
+            delete = """
+            DELETE FROM providerspecialties
+            WHERE providerid = (SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s) AND specialtyabbreviation ILIKE %s
+            """
+            cursor.execute(delete, (employeeNum, specialtyAbbreviation))
+            connection.commit()
+            return "Removed"
+    except Exception as e:
+            print(f"An error occurred: {e}")
+            connection.rollback()
+            return "Unsuccesful"
     
-def EditHealthCareProvider(cursor, connection, employeeNum, title = None, firstName = None, lastName = None, departmentAbbreviation = None):
+def EditHealthCareProvider(cursor, connection, employeeNum, title = "", firstName = "", lastName = "", departmentAbbreviation = ""):
     """
     Description: 
     Given an employee number and information to update, update given employee file to match the
@@ -36,6 +65,49 @@ def EditHealthCareProvider(cursor, connection, employeeNum, title = None, firstN
     Returns:
     boolean: Returns true if HealthCareProvider successfully edited
     """
+    providerExists = """
+    SELECT *
+    FROM healthcareprovider
+    WHERE employeenum ILIKE %s
+    """
+    updateTitle = """
+    UPDATE healthcareprovider
+    SET titleabbreviation = %s
+    WHERE employeenum ILIKE %s
+    """
+    updateFirstName = """
+    UPDATE healthcareprovider
+    SET firstName = %s
+    WHERE employeenum ILIKE %s
+    """
+    updateLastName = """
+    UPDATE healthcareprovider
+    SET LastName = %s
+    WHERE employeenum ILIKE %s
+    """
+    updateDept = """
+    UPDATE healthcareprovider
+    SET departmentabbreviation = %s
+    WHERE employeenum ILIKE %s
+    """
+    try:
+        cursor.execute(providerExists, (employeeNum,))
+        if not cursor.fetchone():
+            raise Exception("Employee number not found")
+        if(len(title)):
+            cursor.execute(updateTitle, (title, employeeNum))
+        if(len(firstName)):
+            cursor.execute(updateFirstName, (firstName, employeeNum))
+        if(len(lastName)):
+            cursor.execute(updateLastName, (lastName, employeeNum))
+        if(len(departmentAbbreviation)):
+            cursor.execute(updateDept, (departmentAbbreviation, employeeNum))
+        connection.commit()
+        return "Succesful"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return "Failed"
     
 def ChangeEmploymentStatus(cursor, connection, employeeNum):
     """
@@ -51,44 +123,30 @@ def ChangeEmploymentStatus(cursor, connection, employeeNum):
     Returns:
     boolean: Returns true if Employee status successfully updated
     """
-    
-    getEmployeeQuery = """
-    SELECT Id, CurrentlyEmployed
-    FROM HealthCareProvider
-    WHERE employeeNum ILIKE %s
+    providerExists = """
+    SELECT *
+    FROM healthcareprovider
+    WHERE employeenum ILIKE %s
     """
     updateEmployment = """
     UPDATE HealthCareProvider
     SET CurrentlyEmployed = NOT CurrentlyEmployed
-    WHERE ID = %s
+    WHERE ID = (SELECT id from healthcareprovider WHERE employeenum ILIKE %s)
+    RETURNING currentlyEmployed
     """
     
     try:
-        # check to see if employee with employeeNum exists
-        cursor.execute(getEmployeeQuery, (employeeNum,))
-        employeeResults = cursor.fetchone()
-        if not employeeResults:
-            print(f"Health Care Provider {employeeNum} does not exist.")
-            return False
-        employeeId = employeeResults[0]
-        isEmployed = not employeeResults[1]
-        
-        cursor.execute(updateEmployment, (employeeId,))
-        employementStatus = "employed" if isEmployed else "unemployed"
-        if cursor.rowcount > 0:
-            print(f"Update successful. Employee {employeeNum} is now {employementStatus}")
-            connection.commit()
-            return True
-        
-        print("Update failed. No rows were affected.")
-        connection.rollback()  # Optional: Rollback if you consider the update critical and want to undo any potential changes
-        return False
-    
+        cursor.execute(providerExists, (employeeNum,))
+        if not cursor.fetchone():
+            raise Exception("Employee number not found")
+        cursor.execute(updateEmployment, (employeeNum,))
+        connection.commit()
+        return "Currently employed = " + str(cursor.fetchone()[0])
     except Exception as e:
         # In case of any exception, print the error and rollback the transaction.
         print(f"An error occurred: {e}")
         connection.rollback()
-        return False
+        return "Unsuccesful"
     
 def CancelShift(cursor, connection, employeeNum, shiftStart):
     """
@@ -106,6 +164,29 @@ def CancelShift(cursor, connection, employeeNum, shiftStart):
     Returns:
     boolean: Returns true if shift successfully canceled
     """
+
+    select = """
+    SELECT *
+    FROM providershifts 
+    WHERE healthcareproviderid = (SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s) AND shiftstart = %s
+    """
+    update = """
+    UPDATE providershifts
+    SET duration = '0m'
+    WHERE healthcareproviderid = (SELECT id FROM healthcareprovider WHERE employeenum ILIKE %s) AND shiftstart = %s
+    """
+    try:
+        cursor.execute(select, (employeeNum, shiftStart))
+        if not cursor.fetchone():
+            raise Exception("Shift does not exist")
+        cursor.execute(update, (employeeNum, shiftStart))
+        connection.commit()
+        return "Succesful"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Rollback in case of any error
+        connection.rollback()
+        return "Failed"
     
 
 def CancelPrescription(cursor, connection, patientNum, medicationAbbreviation):

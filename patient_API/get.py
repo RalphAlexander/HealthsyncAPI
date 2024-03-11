@@ -1,5 +1,4 @@
-# TODO: Needs implementation
-def ViewProvider(cursor, departmentAbbreviation = None, specialtyAbbreviation = None, titleAbbreviation = None):
+def ViewProvider(cursor, firstname = "", lastname = "", departmentAbbreviation = "", titleAbbreviation = ""):
     """
     Description: 
     Given optional filters of department name, specialty and provider title, return all providers who match the given filters.
@@ -13,6 +12,23 @@ def ViewProvider(cursor, departmentAbbreviation = None, specialtyAbbreviation = 
     Returns: 
     {FirstName, LastName, Title.name, Department.Name, Specialty.Name, EmployeeNum}
     """
+    query = """
+    SELECT employeeNum, firstname, lastname, titleabbreviation, department.name, specialtyname
+    FROM healthcareprovider
+        LEFT JOIN providerspecialties ON providerspecialties.providerid = healthcareprovider.id
+        LEFT JOIN specialty ON specialtyabbreviation = specialty.abbreviation
+        JOIN department ON departmentabbreviation = department.abbreviation
+    WHERE currentlyemployed AND firstname ILIKE %s AND lastname ILIKE %s AND departmentabbreviation ILIKE %s AND titleAbbreviation ILIKE %s
+    ORDER BY lastname
+    """
+    try:
+        cursor.execute(query, ("%" + firstname +"%", "%"+lastname+"%", "%" + departmentAbbreviation + "%", "%" + titleAbbreviation + "%"))
+        providers = cursor.fetchall()
+        return providers
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+    
     
 
 # TODO: Needs implementation
@@ -97,18 +113,52 @@ def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = None, endDate = 
     """
     
     try:
-        query = """
-        SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
-        FROM medicalrecord mr
-            JOIN appointment a ON mr.appointmentid = a.id
-            JOIN patient p ON p.id = a.patientid
-        WHERE p.patientnum = %s
-            AND (%s IS NULL OR mr.date >= %s)
-            AND (%s IS NULL OR mr.date <= %s)
-        ORDER BY mr.date DESC;
-        """
-        cursor.execute(query, (patientNum, startDate, startDate, endDate, endDate))
-                
+        # if startDate == None and endDate == None
+        if not startDate and not endDate:
+            query = """
+            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+            FROM medicalrecord mr 
+                JOIN appointment a ON mr.appointmentid  = a.id
+                JOIN patient p ON p.id = a.patientid
+            WHERE p.patientnum = %s
+            ORDER BY mr.date DESC;
+            """
+            cursor.execute(query, (patientNum,))
+        # if startDate == None and endDate != None
+        if not startDate:
+            query = """
+            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+            FROM medicalrecord mr 
+                JOIN appointment a ON mr.appointmentid  = a.id
+                JOIN patient p ON p.id = a.patientid
+            WHERE p.patientnum = %s AND mr.date <= %s
+            ORDER BY mr.date DESC;
+            """
+            cursor.execute(query, (patientNum, endDate))
+        # if startDate != None and endDate == None
+        if not endDate:
+            query = """
+            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+            FROM medicalrecord mr 
+                JOIN appointment a ON mr.appointmentid  = a.id
+                JOIN patient p ON p.id = a.patientid
+            WHERE p.patientnum = %s AND mr.date >= %s
+            ORDER BY mr.date DESC;
+            """
+            cursor.execute(query, (patientNum, startDate))
+        
+        # if startDate != None and endDate != None
+        else:
+            query = """
+            SELECT p.PatientNum, mr.MedicalRecordNum, a.AppointmentNum, mr.Date, mr.Record
+            FROM medicalrecord mr 
+                JOIN appointment a ON mr.appointmentid  = a.id
+                JOIN patient p ON p.id = a.patientid
+            WHERE p.patientnum = %s AND mr.date >= %s and mr.date <= %s
+            ORDER BY mr.date DESC;
+            """
+            cursor.execute(query, (patientNum, startDate, endDate))
+            
         records = cursor.fetchall()
         if len(records) == 0:
             print("Patient does not have any medical records with the given parameters")
@@ -129,7 +179,7 @@ def ViewMedicalRecordsByPatient(cursor, patientNum, startDate = None, endDate = 
         print(f"Error retrieving medical records: {e}")
         return []
 
-def ViewFutureAppt(cursor, patientNum):  #TESTED 1
+def ViewFutureAppt(cursor, patientNum):
     """
     Description: 
     Given a patient number, show all future appointments for that patient including their appointment providers and check in locations.
@@ -139,49 +189,10 @@ def ViewFutureAppt(cursor, patientNum):  #TESTED 1
     patientNum (string)     : The unique identifier for a patient.
 
     Returns:
-    {AppointmentNum, Building, Room, Date, Duration, Purpose, ProviderName}
+    {AppointmentNum, Building, Room, Date, Time, Duration, Purpose, ProviderName}
     """
 
-    try:
-        query = """
-        SELECT a.AppointmentNum, cio.Building, cio.RoomNumber, a.Date, a.Duration, a.Purpose, hc.FirstName, hc.LastName, hc.EmployeeNum
-        FROM Patient p
-	        JOIN Appointment a ON (p.ID = a.PatientID)
-	        JOIN AppointmentProviders ap ON (a.ID = ap.AppointmentID)
-	        JOIN HealthCareProvider hc ON (ap.HealthCareProviderID = hc.ID)
-	        JOIN Department d ON (hc.DepartmentAbbreviation = d.Abbreviation)
-	        JOIN CheckInOffice cio ON (d.CheckInOfficeID = cio.ID)
-        WHERE p.patientNum LIKE %s;
-        """
-        cursor.execute(query, (patientNum,))
-        appointments = cursor.fetchall()
-        if len(appointments) == 0:
-            print("Patient with PatientNum {patientNum} does not exist")
-            return
-        
-        # Format the Date and Duration fields for better readability
-        formatted_appointments = []
-        for appointment in appointments:
-            # Extract Date and Duration from the appointment
-            appointment_num, building, room, date, duration, purpose, first_name, last_name, provider_num = appointment
-
-            # Format the Date field
-            formatted_date = date.strftime('%Y-%m-%d %H:%M:%S') if date else 'N/A'
-
-            # Format the Duration field
-            formatted_duration = f"{duration.seconds // 3600} hours {duration.seconds % 3600 // 60} minutes" if duration else 'N/A'
-
-            # Replace the original Date and Duration with the formatted ones in the appointment
-            formatted_appointment = (appointment_num, building, room, formatted_date, formatted_duration, purpose, f"{first_name} {last_name}", provider_num)
-            formatted_appointments.append(formatted_appointment)
-
-        return formatted_appointments
-
-    except Exception as e:
-        print(f"Error retrieving patient info: {e}")
-        return []
-
-def ViewPatientInfo(cursor, patientNum):        # TESTED 1 ---- crash with incorrect, have a check if none in main
+def ViewPatientInfo(cursor, patientNum):
     """
     Description: 
     Given a patient number, show all that patient's info and addresses. 
@@ -202,108 +213,17 @@ def ViewPatientInfo(cursor, patientNum):        # TESTED 1 ---- crash with incor
             JOIN PatientAddresses pa ON (p.ID = pa.PatientID)
 	        JOIN Address a ON (pa.AddressID = a.ID)
             JOIN Sex s ON (p.SexID = s.SexID)
-        WHERE p.patientNum = %s;
+        WHERE p.patientNum ILIKE %s;
         """
         cursor.execute(query, (patientNum,))
         records = cursor.fetchall()
         if len(records) == 0:
-            print("Patient with PatientNum {patientNum} does not exist")
-            return
-        
-        # Format the records for better readability
-        formatted_records = []
-        for record in records:
-            # Extract birthday and format it
-            birthday = record[5]
-            formatted_birthday = birthday.strftime('%Y-%m-%d') if birthday else 'N/A'
-            
-            # Replace the original birthday with the formatted one in the record
-            formatted_record = record[:5] + (formatted_birthday,) + record[6:]
-            formatted_records.append(formatted_record)
-        
-        return formatted_records
-
-    except Exception as e:
-        print(f"Error retrieving patient info: {e}")
-        return []
-
-#TODO: gotta edit this to take a third param like add date of birth optional
-def FindPatient(cursor, firstName, lastName, birthday = None):
-    """
-    Description: 
-    Given a patient's first name, last name, and date of birth. Show a list of patients that match the input and include patientNum. 
-
-    Parameters:
-    cursor (psycopg2)   : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
-    firstName (string)  : First name of the patient to be searched.
-    lastName (string)   : Last name of the patient to be searched.
-    birthday (string)   : Title of the patient to be searched.
-
-    Returns:
-    {FirstName, LastName, PatientNum, Birthday, Address1, City}
-    """
-    
-    try:
-        query = """
-        SELECT p.FirstName, p.LastName, p.PatientNum, p.birthday, a.Address1, a.City
-        FROM Patient p
-	        JOIN PatientAddresses pa ON (p.ID = pa.PatientID)
-	        JOIN Address a ON (pa.AddressID = a.ID)
-        WHERE FirstName = %s AND LastName = %s
-        ORDER BY PatientNum;
-        """
-        cursor.execute(query, (firstName, lastName))
-        records = cursor.fetchall()
-        if len(records) == 0:
-            print("Patient with the given information does not exist")
-            return
-        
-        # Format the date of birth for each record before returning
-        formatted_records = []
-        for record in records:
-            first_name, last_name, patient_num, dob, address1, city = record
-            # Format the date of birth (dob) to a string in the desired format
-            formatted_dob = dob.strftime('%Y-%m-%d')  # Converts date to 'YYYY-MM-DD' format
-            # Append the formatted record to the list
-            formatted_records.append((first_name, last_name, patient_num, formatted_dob, address1, city))
-        
-        return formatted_records
-
-    except Exception as e:
-        print(f"Error retrieving patient: {e}")
-        return []
-
-# TODO: gotta edit this to take a third param     -------- issue, how do we provide all the specialties for each employee, what if they have more than one
-def FindEmployee(cursor, firstName, lastName):
-    """
-    Description: 
-    Given an employee's first name, last name and optional title abbreviation. Show a table of matching employees with their unique num. 
-
-    Parameters:
-    cursor (psycopg2)           : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
-    firstName (string)          : First name of the employee to be searched.
-    lastName (string)           : Last name of the employee to be searched.
-    titleAbbreviation (string)  : Title of the employee to be searched.
-
-    Returns:
-    {EmployeeNum, FirstName, LastName, Title, Specialty}
-    """
-    
-    try:
-        query = """
-        SELECT FirstName, LastName, EmployeeNum, t.Name
-        FROM HealthCareProvider
-	        JOIN Title t ON (TitleAbbreviation = t.Abbreviation)
-        WHERE FirstName = %s AND LastName = %s
-        ORDER BY EmployeeNum;
-        """
-        cursor.execute(query, (firstName, lastName))
-        records = cursor.fetchall()
+            raise Exception("Patient not found")
         return records
     except Exception as e:
-        print(f"Error retrieving employee: {e}")
-        return []
-    
+        print(f"Error retrieving patient info: {e}")
+        return None
+
     
 def ListAllSpecialties(cursor):
     """
@@ -317,19 +237,17 @@ def ListAllSpecialties(cursor):
     {SpecialtyAbbreviation, Specialty.Name}
 
     """
+    query = """
+    SELECT *
+    FROM Specialty
+    ORDER BY abbreviation;
+    """
     try:
-        query = """
-        SELECT s.*
-        FROM Specialty
-        ORDER BY abbreviation;
-        """
         cursor.execute(query)
-        records = cursor.fetchall()
-        return records
-    
+        return cursor.fetchall()
     except Exception as e:
         print(f"Error retrieving all specialties: {e}")
-        return []
+        return None
 
 def ListAllTitles(cursor):
     """
@@ -345,16 +263,15 @@ def ListAllTitles(cursor):
     
     try:
         query = """
-        SELECT t.*
-        FROM Title t
-        ORDER BY t.abbreviation;
+        SELECT *
+        FROM Title
+        ORDER BY abbreviation;
         """
         cursor.execute(query)
-        records = cursor.fetchall()
-        return records
+        return cursor.fetchall()
     except Exception as e:
         print(f"Error retrieving all titles: {e}")
-        return []
+        return None
 
 def ListAllDepartments(cursor):
     """
@@ -376,8 +293,7 @@ def ListAllDepartments(cursor):
         ORDER BY d.Name;
         """
         cursor.execute(query)
-        records = cursor.fetchall()
-        return records
+        return cursor.fetchall()
     except Exception as e:
         print(f"Error retrieving all departments: {e}")
         return []

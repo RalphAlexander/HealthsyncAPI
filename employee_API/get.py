@@ -131,3 +131,33 @@ def ViewEmployeesAvailablity(cursor, departmentAbbreviation, date):
     {FirstName, LastName, EmployeeNum, Email, Phone}
 
     """
+
+def FindPatient(cursor, firstName, lastName, birthday):
+    """
+    Description: 
+    Given a patient's first name, last name, and date of birth. Show a list of patients that match the input and include patientNum. 
+
+    Parameters:
+    cursor (psycopg2)   : A cursor object obtained from a psycopg2 database connection, used to execute database queries.
+    firstName (string)  : First name of the patient to be searched.
+    lastName (string)   : Last name of the patient to be searched.
+    birthday (string)   : Title of the patient to be searched.
+
+    Returns:
+    {FirstName, LastName, PatientNum, Birthday, Address1, City}
+    """
+    
+    try:
+        query = """
+        SELECT p.FirstName, p.LastName, p.PatientNum, p.birthday, a.Address1, a.City, a.stateabbreviation
+        FROM Patient p
+	        JOIN PatientAddresses pa ON (p.ID = pa.PatientID)
+	        JOIN Address a ON (pa.AddressID = a.ID)
+        WHERE FirstName ILIKE %s AND LastName ILIKE %s AND birthday = %s
+        ORDER BY PatientNum;
+        """
+        cursor.execute(query, (firstName, lastName, birthday))
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Error retrieving patient: {e}")
+        return None

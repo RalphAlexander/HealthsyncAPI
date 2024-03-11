@@ -1,4 +1,9 @@
-def CreateHealthCareProvider(cursor, firstName, lastName, titleAbbreviation, departmentAbbreviation, specialtyAbbreviation):
+import string
+import random
+
+
+
+def CreateHealthCareProvider(cursor, conn, employeeNum, firstName, lastName, titleAbbreviation, departmentAbbreviation, specialtyAbbreviation):
     """
     Description: 
     Given a first name, last name, title, department, and specialty, add a new Employee in the database. Returns the employee number.
@@ -15,8 +20,28 @@ def CreateHealthCareProvider(cursor, firstName, lastName, titleAbbreviation, dep
     Returns:
     boolean: Returns true if HealthCareProvider successfully created
     """
+    insertProvider = """
+    INSERT INTO healthcareprovider (EmployeeNum, firstname, lastname, titleabbreviation, departmentAbbreviation, currentlyEmployed) VALUES
+    (%s, %s, %s, %s, %s, TRUE)
+    RETURNING id;
+    """
+    insertSpecialty = """
+    INSERT INTO providerSpecialties (providerid, specialtyabbreviation) VALUES
+    (%s, %s)
+    """
+    try:
+        cursor.execute(insertProvider, (employeeNum, firstName, lastName, titleAbbreviation, departmentAbbreviation))
+        providerID = int(cursor.fetchone()[0])
+        if(specialtyAbbreviation):
+            cursor.execute(insertSpecialty, (providerID, specialtyAbbreviation))
+        conn.commit()
+        return "Succesful"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        connection.rollback()
+        return "Failed"
     
-def CreateShift(cursor, connection, employeeNum, shiftStart, shiftEnd):
+def CreateShift(cursor, connection, employeeNum, shiftStart, duration):
     """
     Description:
     Given an EmployeeNum, shift start datetime, and shift end datetime, only if the employee is not already working
@@ -27,14 +52,36 @@ def CreateShift(cursor, connection, employeeNum, shiftStart, shiftEnd):
     connection (psycopg2)   : A connection object associated with the database session. This object is used to commit or roll
                               back the transaction.
     employeeNum (string)    : The unique identifier for an employee.
-    shiftStart (string)     : A datetime formatted in any accepted format.
-    shiftEnd (string)       : A datetime formatted in any accepted format.
+    shiftStart (string)     : A timestamp
+    duration (string)       : A interval
     
     Returns:
     boolean: Returns true if shift successfully created
     """
+    concurrentShifts = """
+    SELECT COUNT(*)
+    FROM providerShifts
+    WHERE healthcareproviderid = (SELECT id from healthcareprovider WHERE employeeNum ILIKE %s) AND %s < shiftStart::TIMESTAMP + duration AND %s::TIMESTAMP + %s::INTERVAL > shiftStart
+    """
+    create = """
+    INSERT INTO providerShifts(healthcareproviderid, shiftstart, duration) VALUES
+    ((SELECT id from healthcareprovider WHERE employeeNum ILIKE %s), %s, %s);
+    """
+    try:
+        #Check to see if any concurrent shifts already exist and return false if true
+        cursor.execute(concurrentShifts, (employeeNum, shiftStart, shiftStart, duration))
+        if(cursor.fetchone()[0] > 0):
+            raise Exception("Concurrent shift already exists for given employee")
+        cursor.execute(create, (employeeNum, shiftStart, duration))
+        connection.commit()
+        return "Successful"
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Rollback in case of any error
+        connection.rollback()
+        return "Failed"
 
-def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, city, stateAbbreviation, address1, address2 = None, postalCode = None, email = None, phone = None):
+def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, email = "", phone = ""):
     """
     Description: 
     Given a patient name, optional email, optional phone number, sex, birthday and address,
@@ -59,7 +106,40 @@ def CreatePatient(cursor, connection, firstName, lastName, sex, birthday, city, 
     Returns: 
     {PatientNum}
     """
-    
+    create = """
+    INSERT INTO patient(patientnum, firstname, lastname, email, phone, sexid, birthday) VALUES
+    (%s, %s, %s, %s, %s, %s, %s)
+    """
+    if not len(email):
+        email = None
+    if not len(phone):
+        phone = None
+    try:
+        ptNum = createPatientNum(cursor)
+        cursor.execute(create, (ptNum, firstName, lastName, email, phone, sex.upper(), birthday))
+        connection.commit()
+        return ptNum
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        # Rollback in case of any error
+        connection.rollback()
+        return "Failed"
+
+#returns a uniqe patient num
+def createPatientNum(cursor):
+    characters = string.ascii_letters + string.digits
+    generated_string = ""
+    for i in range(10):
+        generated_string += (random.choice(characters))
+
+    query = """
+    SELECT * FROM patient WHERE patientNum ILIKE %s
+    """
+    cursor.execute(query, (generated_string,))
+    if not cursor.fetchone():
+        return generated_string
+    return createPatientNum(cursor)
+
 def CreateMedicalRecord(cursor, connection, appointmentNum, recordText):
     """
     Description: 

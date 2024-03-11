@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-def EditPatient(cursor, connection, patientNum, firstName = None, lastName = None, email = None, phone = None):
+def EditPatient(cursor, connection, patientNum, firstName = "", lastName = "", email = "", phone = ""):
     """
     Description: 
     Given the patient number and new information to update, updates the patient file with the new
@@ -19,49 +19,50 @@ def EditPatient(cursor, connection, patientNum, firstName = None, lastName = Non
     Returns:
     boolean: Returns true if the edit on the database is successful
     """
-    
+    query_pt = """
+    SELECT * 
+    FROM patient
+    WHERE patientnum ILIKE %s
+    """
+    update_firstName = """
+    UPDATE patient
+    SET firstName = %s
+    WHERE patientnum ILIKE %s
+    """
+    update_lastName = """
+    UPDATE patient
+    SET lastName = %s
+    WHERE patientnum ILIKE %s
+    """
+    update_email = """
+    UPDATE patient
+    SET email = %s
+    WHERE patientnum ILIKE %s
+    """
+    update_phone = """
+    UPDATE patient
+    SET phone = %s
+    WHERE patientnum ILIKE %s
+    """
     try:
-        # Initialize an empty list to hold the update clauses.
-        updates = []
-        # Append the new values to the updates list if they are provided.
-        if firstName is not None:
-            updates.append(f"firstName = %s")
-        if lastName is not None:
-            updates.append(f"lastName = %s")
-        if email is not None:
-            updates.append(f"email = %s")
-        if phone is not None:
-            updates.append(f"phone = %s")
-        
-        # If there are no updates, return False.
-        if not updates:
-            return False
-        
-        
-        # Build the update statement.
-        update_statement = ', '.join(updates)
-        query = f"UPDATE patient SET {update_statement} WHERE patientNum = %s"
-        
-        # Tuple of values to be updated.
-        values = tuple([value for value in [firstName, lastName, email, phone] if value is not None]) + (patientNum,)
-        
-        # Execute the update query.
-        cursor.execute(query, values)
-        
-        # Check if the update was successful by looking at rowcount.
-        if cursor.rowcount == 0:
-            return False  # No rows were updated, hence operation was unsuccessful.
-        
-        # Commit the changes if there were updates.
+        cursor.execute(query_pt,(patientNum,))
+        if not cursor.fetchone:
+            raise Exception("Patient not found")
+        if len(firstName): 
+            cursor.execute(update_firstName, (firstName, patientNum))
+        if len(lastName): 
+            cursor.execute(update_lastName, (lastName, patientNum))
+        if len(email):
+            cursor.execute(update_email, (email, patientNum))
+        if len(phone):
+            cursor.execute(update_phone, (phone, patientNum))
         connection.commit()
-        print(f"Successfully updated patient {patientNum}.")
-        return True  # The edit was successful.
-    
+        return "Successful"
     except Exception as e:
         # In case of any exception, print the error and rollback the transaction.
         print(f"An error occurred: {e}")
         connection.rollback()
-        return False
+        return "Failed"
     
 
 def RemoveAddress(cursor, connection, patientNum, city, stateAbbreviation, address1, postalCode = None):
