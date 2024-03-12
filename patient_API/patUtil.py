@@ -1,3 +1,6 @@
+# Utility for patient interface
+# Functions: Check if patient exists in system, generate unique patient numbers and record numbers
+
 import string
 import random
 

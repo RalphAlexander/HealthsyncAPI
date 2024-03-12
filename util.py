@@ -1,3 +1,7 @@
+#Utility for appointment generation. Generates unique appointment numbers
+
+
+
 def GenerateAppointmentNum(cursor):
     """
     Generates the next appointment number by incrementing the highest existing appointment number in the database.

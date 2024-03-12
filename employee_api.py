@@ -1,3 +1,15 @@
+# Team JOIN Forces
+# CSS475 Final Project
+# John Chenault
+# HealthSync API : Employee interface
+
+# NOTE: We omitted primary authors on each API function because for most functions, each person contributed in some
+# way (i.e. building the UI, writing the SQL code, implementing the connection between Python and the database) in addition 
+# to iterating on each others work, thus it was unclear who the primary author was.
+
+
+
+
 import os
 import sys
 import psycopg2

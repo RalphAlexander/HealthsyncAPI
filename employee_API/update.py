@@ -1,3 +1,6 @@
+# Update and Delete operations for employee interface
+
+
 def EditSpecialty(cursor, connection, employeeNum, specialtyAbbreviation):
     """
     Description: 

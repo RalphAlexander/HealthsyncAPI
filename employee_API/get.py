@@ -1,3 +1,5 @@
+# Read operations for employee interface
+
 from datetime import datetime
 
 def ViewAllPrescriptions(cursor, patientNum):
