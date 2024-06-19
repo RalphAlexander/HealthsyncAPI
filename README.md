@@ -38,7 +38,7 @@ DB_NAME=healthsync
 DB_USER=postgres
 DB_PASSWORD=your_db_password
 ```
-## [Usage](#Usage)
+## Usage
 To run the program using the employee API:
 ```
 python employee_api.py
